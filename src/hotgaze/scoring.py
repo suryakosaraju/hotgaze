@@ -212,6 +212,70 @@ def find_focal_points(attention_map: Any, n: int = 5) -> list[dict[str, Any]]:
     return kept
 
 
+# ── Compare helpers ──────────────────────────────────────────────────────────
+
+
+def compute_grid_deltas(hm_a: np.ndarray, hm_b: np.ndarray) -> list[float]:
+    """Compute 3×3 grid of attention-share deltas (B - A).
+
+    Each cell's share is its fraction of total map mass. Returns 9 floats
+    in row-major order (top-left to bottom-right). Positive = B has more
+    attention in that cell.
+    """
+    h, w = hm_a.shape
+    dw = w // 3
+    dh = h // 3
+    total_a = max(float(hm_a.sum()), 1e-12)
+    total_b = max(float(hm_b.sum()), 1e-12)
+
+    deltas: list[float] = []
+    for row in range(3):
+        y0 = row * dh
+        y1 = (row + 1) * dh if row < 2 else h
+        for col in range(3):
+            x0 = col * dw
+            x1 = (col + 1) * dw if col < 2 else w
+            share_a = float(hm_a[y0:y1, x0:x1].sum()) / total_a
+            share_b = float(hm_b[y0:y1, x0:x1].sum()) / total_b
+            deltas.append(round(share_b - share_a, 6))
+    return deltas
+
+
+def compute_focal_movement(
+    focal_a: list[dict[str, Any]], focal_b: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    """Compute focal-point movement between two sets.
+
+    Pairs focal points by rank and computes Euclidean distance.
+    """
+    import math
+
+    movement: list[dict[str, Any]] = []
+    max_n = max(len(focal_a), len(focal_b))
+    for i in range(min(max_n, 5)):
+        a = focal_a[i] if i < len(focal_a) else None
+        b = focal_b[i] if i < len(focal_b) else None
+        entry: dict[str, Any] = {"rank": i + 1}
+        if a:
+            entry["x_a"] = a["x"]
+            entry["y_a"] = a["y"]
+        else:
+            entry["x_a"] = -1
+            entry["y_a"] = -1
+        if b:
+            entry["x_b"] = b["x"]
+            entry["y_b"] = b["y"]
+        else:
+            entry["x_b"] = -1
+            entry["y_b"] = -1
+        if a and b:
+            entry["distance"] = round(math.sqrt((a["x"] - b["x"]) ** 2 + (a["y"] - b["y"]) ** 2), 6)
+        else:
+            entry["distance"] = -1.0
+        movement.append(entry)
+    return movement
+
+
 # ── Canonical JSON ───────────────────────────────────────────────────────────
 
 
