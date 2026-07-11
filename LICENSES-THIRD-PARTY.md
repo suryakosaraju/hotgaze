@@ -90,7 +90,8 @@ audit is conducted in T0.3 and will be appended below.
 | URL | https://github.com/opencv/opencv_zoo (models/face_detection_yunet) |
 | Code license | MIT |
 | Weights license | MIT |
-| Weights URL | https://huggingface.co/opencv-zoo/face-detection-yunet (232 KB ONNX) |
+| Weights URL | https://huggingface.co/opencv-zoo/face-detection-yunet (227 KB ONNX) |
+| SHA-256 | `8f2383e4dd3cfbb4553ea8718107fc0423210dc964f9f4280604804ed2552fa4` |
 | Integration | Native `cv2.FaceDetectorYN` API (OpenCV ≥ 4.5) |
 | Redistribution | ✅ YES — MIT-licensed |
 | **Final verdict** | **OK** — tiny (232 KB), native OpenCV API, MIT |
