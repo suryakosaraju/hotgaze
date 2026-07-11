@@ -59,7 +59,19 @@ def parse_region(region_str: str, img_w: int, img_h: int) -> tuple[str, int, int
         w = int(round(w * img_w))
         h = int(round(h * img_h))
     else:
-        # Pixel: check no values look fractional (0.x without trailing f)
+        # Pixel: reject values with decimal points (ambiguous without trailing f)
+        for val, label in [
+            (m.group("x"), "x"),
+            (m.group("y"), "y"),
+            (m.group("w"), "w"),
+            (m.group("h"), "h"),
+        ]:
+            if "." in val:
+                raise RegionParseError(
+                    f"Region {region_str!r}: {label}={val!r} looks fractional. "
+                    "Add the f suffix for fractional coords (name:0.1,0.2,0.3,0.08f) "
+                    "or use whole-pixel values (name:10,20,100,50)."
+                )
         x = int(x)
         y = int(y)
         w = int(w)
@@ -204,7 +216,13 @@ def find_focal_points(attention_map: Any, n: int = 5) -> list[dict[str, Any]]:
 
 
 def _format_float(value: float) -> str:
-    """Format a float to 6 decimal places, fixed format, no trailing zeros."""
+    """Format a float to fixed 6 decimal places.
+
+    Raises ValueError on NaN or Inf — these are invalid JSON and would
+    break downstream parsers.
+    """
+    if not math.isfinite(value):
+        raise ValueError(f"Non-finite float in canonical JSON: {value!r}")
     return f"{value:.6f}"
 
 

@@ -78,10 +78,10 @@ class TestParseRegion:
         with pytest.raises(RegionParseError, match="Invalid region format"):
             parse_region("just_a_name", 800, 600)
 
-    def test_float_without_f_is_truncated_to_int(self) -> None:
-        """A region without trailing f but with float values → int truncation."""
-        name, x, y, w, h = parse_region("test:0.5,0.5,10,10", 800, 600)
-        assert x == 0 and y == 0  # truncated to int
+    def test_float_without_f_raises(self) -> None:
+        """A region with decimal values but no trailing f → actionable error."""
+        with pytest.raises(RegionParseError, match="looks fractional"):
+            parse_region("test:0.5,0.5,10,10", 800, 600)
 
 
 # ── Region scoring ───────────────────────────────────────────────────────────
@@ -231,6 +231,16 @@ class TestCanonicalJSON:
         assert data["mode"] == "compare"
         assert "image_b" in data
         assert "compare" in data
+
+    def test_nan_raises(self) -> None:
+        """Non-finite floats (NaN, Inf) raise ValueError — invalid JSON."""
+        encoder = _CanonicalEncoder()
+        with pytest.raises(ValueError, match="Non-finite"):
+            encoder.encode({"bad": float("nan")})
+        with pytest.raises(ValueError, match="Non-finite"):
+            encoder.encode({"bad": float("inf")})
+        with pytest.raises(ValueError, match="Non-finite"):
+            encoder.encode({"bad": float("-inf")})
 
 
 # ── Schema validation ────────────────────────────────────────────────────────
