@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hotgaze.dev/schemas/score.schema.json",
+  "title": "HotGaze Score Output",
+  "description": "Canonical output format for hotgaze score and compare commands. Schema version 1.",
+  "type": "object",
+  "required": ["schema", "mode", "image", "config", "regions", "focal_points"],
+  "properties": {
+    "schema": {
+      "description": "Schema version. Bump on any breaking change to output format.",
+      "const": 1
+    },
+    "mode": {
+      "description": "score = single image, compare = two-image delta report.",
+      "enum": ["score", "compare"]
+    },
+    "image": {
+      "type": "object",
+      "required": ["path", "size", "working_size"],
+      "properties": {
+        "path": {"type": "string"},
+        "size": {
+          "type": "object",
+          "required": ["width", "height"],
+          "properties": {
+            "width": {"type": "integer", "minimum": 1},
+            "height": {"type": "integer", "minimum": 1}
+          }
+        },
+        "working_size": {
+          "type": "object",
+          "required": ["width", "height"],
+          "properties": {
+            "width": {"type": "integer", "minimum": 1},
+            "height": {"type": "integer", "minimum": 1}
+          }
+        }
+      }
+    },
+    "image_b": {
+      "description": "Second image metadata (compare mode only).",
+      "type": "object",
+      "required": ["path", "size", "working_size"],
+      "properties": {
+        "path": {"type": "string"},
+        "size": {
+          "type": "object",
+          "required": ["width", "height"],
+          "properties": {
+            "width": {"type": "integer", "minimum": 1},
+            "height": {"type": "integer", "minimum": 1}
+          }
+        },
+        "working_size": {
+          "type": "object",
+          "required": ["width", "height"],
+          "properties": {
+            "width": {"type": "integer", "minimum": 1},
+            "height": {"type": "integer", "minimum": 1}
+          }
+        }
+      }
+    },
+    "config": {
+      "type": "object",
+      "required": ["backend"],
+      "properties": {
+        "backend": {"enum": ["fast", "deep"]},
+        "working_long_edge": {"type": "integer"},
+        "smooth_sigma": {"type": "number"},
+        "weights": {
+          "type": "object",
+          "properties": {
+            "saliency": {"type": "number"},
+            "contrast": {"type": "number"},
+            "center_bias": {"type": "number"},
+            "gaze_flow": {"type": "number"},
+            "text": {"type": "number"},
+            "faces": {"type": "number"}
+          }
+        }
+      }
+    },
+    "regions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "box", "share", "peak_value", "rank"],
+        "properties": {
+          "name": {"type": "string"},
+          "box": {
+            "type": "object",
+            "required": ["x", "y", "w", "h"],
+            "properties": {
+              "x": {"type": "integer", "minimum": 0},
+              "y": {"type": "integer", "minimum": 0},
+              "w": {"type": "integer", "minimum": 1},
+              "h": {"type": "integer", "minimum": 1}
+            }
+          },
+          "share": {"type": "number", "minimum": 0, "maximum": 1},
+          "peak_value": {"type": "number", "minimum": 0, "maximum": 1},
+          "rank": {"type": "integer", "minimum": 1}
+        }
+      }
+    },
+    "focal_points": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["x", "y", "value", "rank"],
+        "properties": {
+          "x": {"type": "integer", "minimum": 0},
+          "y": {"type": "integer", "minimum": 0},
+          "value": {"type": "number", "minimum": 0, "maximum": 1},
+          "rank": {"type": "integer", "minimum": 1}
+        }
+      }
+    },
+    "compare": {
+      "description": "Present only in compare mode.",
+      "type": "object",
+      "required": ["per_region_deltas", "grid_deltas", "focal_point_movement"],
+      "properties": {
+        "per_region_deltas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "share_a", "share_b", "delta"],
+            "properties": {
+              "name": {"type": "string"},
+              "share_a": {"type": "number"},
+              "share_b": {"type": "number"},
+              "delta": {"type": "number"}
+            }
+          }
+        },
+        "grid_deltas": {
+          "type": "array",
+          "items": {"type": "number"},
+          "minItems": 9,
+          "maxItems": 9
+        },
+        "focal_point_movement": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["rank", "x_a", "y_a", "x_b", "y_b", "distance"],
+            "properties": {
+              "rank": {"type": "integer", "minimum": 1},
+              "x_a": {"type": "integer"},
+              "y_a": {"type": "integer"},
+              "x_b": {"type": "integer"},
+              "y_b": {"type": "integer"},
+              "distance": {"type": "number"}
+            }
+          }
+        }
+      }
+    }
+  }
+}

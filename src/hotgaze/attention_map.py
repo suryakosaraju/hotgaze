@@ -66,14 +66,28 @@ class AttentionMap:
             self._heatmap, original, self._original_size, alpha=alpha, colormap=colormap
         )
 
-    def score(self, regions: list[Any]) -> list[Any]:
-        """Score named regions. Delegates to scoring module."""
+    def score(self, regions: list[str]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        """Score named regions on this attention map.
+
+        Args:
+            regions: Region strings (e.g. ``"cta:100,200,300,80"``).
+
+        Returns:
+            Tuple of ``(scored_regions, focal_points)``.
+        """
         from .scoring import score_regions
 
         return score_regions(self, regions)
 
-    def focal_points(self, n: int = 5) -> list[Any]:
-        """Extract top-N focal points. Delegates to scoring module."""
+    def focal_points(self, n: int = 5) -> list[dict[str, Any]]:
+        """Extract top-N focal points (local maxima).
+
+        Args:
+            n: Maximum number of focal points to return.
+
+        Returns:
+            List of dicts with x, y, value, rank.
+        """
         from .scoring import find_focal_points
 
         return find_focal_points(self, n)
