@@ -90,12 +90,10 @@ class TestCompareCLI:
         )
         assert result.exit_code == 0
         data = json.loads(result.output)
-        # Regions in score output
         assert len(data["regions"]) == 2
         for r in data["regions"]:
             assert "share" in r
             assert "peak_value" in r
-        # Compare deltas
         deltas = data["compare"]["per_region_deltas"]
         assert len(deltas) == 2
         for d in deltas:
@@ -103,6 +101,21 @@ class TestCompareCLI:
             assert "share_a" in d
             assert "share_b" in d
             assert "delta" in d
+        # Region mode: grid_deltas and focal_point_movement are empty
+        assert data["compare"]["grid_deltas"] == []
+        assert data["compare"]["focal_point_movement"] == []
+
+    def test_grid_deltas_non_empty_in_no_region_mode(self) -> None:
+        """In no-region mode, grid_deltas has 9 values and focal_movement is populated."""
+        runner = CliRunner()
+        result = runner.invoke(
+            main,
+            ["compare", _fixture("landing.png"), _fixture("landing_variant.png"), "--json"],
+        )
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert len(data["compare"]["grid_deltas"]) == 9
+        assert len(data["compare"]["focal_point_movement"]) > 0
 
     # ── AC 4: no-region mode → 3×3 grid + focal movement ─────────────────
 

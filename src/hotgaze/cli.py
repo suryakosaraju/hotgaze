@@ -245,7 +245,7 @@ def compare(
                     [],
                     compare={
                         "per_region_deltas": deltas,
-                        "grid_deltas": [0.0] * 9,
+                        "grid_deltas": [],
                         "focal_point_movement": [],
                     },
                     image_b_path=image_b,
