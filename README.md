@@ -10,6 +10,8 @@ Predict where users' eyes land on a design, get a machine-readable attention sha
 
 ![Original design next to its HotGaze attention overlay — headline, CTA, and sidebar items glow hot](docs/demo.png)
 
+> **Status: v0.1 alpha.** The fast heuristic backend, region scoring, and A/B compare are shipping and tested. The deep saliency model (UNISAL) lands next. API and CLI may change before v1.
+
 ## Why this exists
 
 Every existing attention-prediction tool — paid ([HeatScope](https://heatscope.space), Attention Insight, EyeQuant) and free ([Foveacast](https://www.allaboutken.com/posts/20260503-foveacast/)) — stops at a colored overlay for a human to eyeball. That's fine for a designer squinting at a mockup. It's useless when you want to:
