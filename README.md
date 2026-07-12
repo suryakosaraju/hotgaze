@@ -8,12 +8,6 @@ Attention heatmaps for UI screenshots — with **numeric scores and A/B compare*
 
 Predict where users' eyes land on a design, get a machine-readable attention share for any region, and diff two variants to see which one wins and by how much. Local, offline, MIT-licensed.
 
-![Original design next to its HotGaze attention overlay — headline, CTA, and sidebar items glow hot](docs/demo.png)
-
-> **Status: v0.1 alpha.** The fast heuristic backend, region scoring, and A/B compare are shipping and tested. The deep saliency model (UNISAL) lands next. API and CLI may change before v1.
-
----
-
 ## Why this exists
 
 Every existing attention-prediction tool — paid ([HeatScope](https://heatscope.space), Attention Insight, EyeQuant) and free ([Foveacast](https://www.allaboutken.com/posts/20260503-foveacast/)) — stops at a colored overlay for a human to eyeball. That's fine for a designer squinting at a mockup. It's useless when you want to:
@@ -100,7 +94,6 @@ Variant B lost 37% of the CTA's attention share. That's an actionable number, no
 - **v0.3** — GitHub Action for attention regression testing on PR screenshots.
 - **v0.4+** — macOS wrapper, Figma plugin, benchmarking against public saliency datasets.
 
-Track progress in [PROGRESS.md](PROGRESS.md); see [PLAN.md](PLAN.md) for the phased task list and [DESIGN.md](DESIGN.md) for rationale.
 
 ## License
 
@@ -110,6 +103,4 @@ Third-party models and dependencies are recorded with their licenses and redistr
 
 ## Credits
 
-Predictive saliency stands on decades of vision research. When the deep backend ships, it builds on [UNISAL](https://github.com/rdroste/unisal) (Droste et al.). The fast backend implements [Hou & Zhang's spectral-residual approach (2007)](https://www.cv-foundation.org/openaccess/content_cvpr_2007/papers/Hou_Saliency_Detection_A_Spectral_Residual_Approach_CVPR_2007_paper.pdf). Face detection uses [YuNet](https://github.com/opencv/opencv_zoo).
-
-Built with [Claude Code](https://claude.com/claude-code) as the orchestrator and DeepSeek as the implementing agent.
+Predictive saliency stands on decades of vision research. The deep backend builds on [UNISAL](https://github.com/rdroste/unisal) (Droste et al.). The fast backend implements [Hou & Zhang's spectral-residual approach (2007)](https://www.cv-foundation.org/openaccess/content_cvpr_2007/papers/Hou_Saliency_Detection_A_Spectral_Residual_Approach_CVPR_2007_paper.pdf). Face detection uses [YuNet](https://github.com/opencv/opencv_zoo).
