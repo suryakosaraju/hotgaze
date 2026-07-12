@@ -1,4 +1,4 @@
-# HotGaze
+# HotGaze ⏿
 
 Attention heatmaps for UI screenshots — with **numeric scores and A/B compare**, not just pretty pictures.
 
