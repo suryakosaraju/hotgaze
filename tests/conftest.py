@@ -8,6 +8,7 @@ fixture directory is empty or missing, so a fresh clone just works.
 from __future__ import annotations
 
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -31,7 +32,7 @@ def _ensure_fixtures() -> None:
         pytest.skip(f"Fixture generator not found: {script}")
 
     result = subprocess.run(
-        ["python", str(script)],
+        [sys.executable, str(script)],
         capture_output=True,
         text=True,
         cwd=str(script.parent.parent),
