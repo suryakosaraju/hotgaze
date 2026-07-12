@@ -33,3 +33,7 @@ coverage.xml
 
 # Test fixtures (generated on demand by conftest.py)
 tests/fixtures/*.png
+
+# Vendored-model backbone weights (downloaded on first use, never committed)
+src/hotgaze/_unisal/weights/
+*.pth.tar
