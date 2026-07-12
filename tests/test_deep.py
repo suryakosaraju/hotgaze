@@ -102,13 +102,18 @@ class TestDeepCLIErrors:
     def test_deep_without_torch_actionable(self) -> None:
         """--backend deep raises actionable ImportError when torch missing.
 
-        When torch is present, this test skips — CI (where torch is not in
-        the base matrix) will catch this path naturally.
+        When torch is absent, _default_deep_layers raises ImportError with
+        the pip install hotgaze[deep] message. When torch is present, this
+        test skips (the real CI matrix covers the no-torch path naturally).
         """
         try:
             import torch  # noqa: F401
         except ImportError:
-            pass
+            # Torch not installed — test the error path
+            from hotgaze.engine import _default_deep_layers
+
+            with pytest.raises(ImportError, match="pip install hotgaze"):
+                _default_deep_layers()
         else:
             pytest.skip("torch is installed — CI covers the no-torch path")
 
