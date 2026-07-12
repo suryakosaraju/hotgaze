@@ -8,6 +8,8 @@ Attention heatmaps for UI screenshots — with **numeric scores and A/B compare*
 
 Predict where users' eyes land on a design, get a machine-readable attention share for any region, and diff two variants to see which one wins and by how much. Local, offline, MIT-licensed.
 
+![Original design next to its HotGaze attention overlay — headline, CTA, and sidebar items glow hot](docs/demo.png)
+
 ## Why this exists
 
 Every existing attention-prediction tool — paid ([HeatScope](https://heatscope.space), Attention Insight, EyeQuant) and free ([Foveacast](https://www.allaboutken.com/posts/20260503-foveacast/)) — stops at a colored overlay for a human to eyeball. That's fine for a designer squinting at a mockup. It's useless when you want to:
