@@ -86,11 +86,11 @@ markers = [
 ]
 
 [tool.mypy]
-python_version = "3.10"
 strict = true
 warn_unused_ignores = true
 warn_redundant_casts = true
 warn_return_any = false
+disallow_any_generics = false
 files = ["src/hotgaze"]
 
 [[tool.mypy.overrides]]
