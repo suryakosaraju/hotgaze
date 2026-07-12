@@ -25,6 +25,7 @@ _PLACEHOLDER_BASE = "https://github.com/suryakosaraju/hotgaze/releases/download/
 _UNISAL_URL = f"{_PLACEHOLDER_BASE}/weights_best.pth"
 _UNISAL_MIT1003_URL = f"{_PLACEHOLDER_BASE}/weights_ft_mit1003.pth"
 _YUNET_URL = f"{_PLACEHOLDER_BASE}/face_detection_yunet_2023mar.onnx"
+_MOBILENET_URL = f"{_PLACEHOLDER_BASE}/mobilenet_v2.pth.tar"
 
 # ── Registry ─────────────────────────────────────────────────────────────────
 
@@ -56,6 +57,12 @@ _WEIGHTS: dict[str, WeightSpec] = {
         filename="face_detection_yunet_2023mar.onnx",
         sha256="8f2383e4dd3cfbb4553ea8718107fc0423210dc964f9f4280604804ed2552fa4",
         url=_YUNET_URL,
+    ),
+    "mobilenet_backbone": WeightSpec(
+        name="mobilenet_backbone",
+        filename="mobilenet_v2.pth.tar",
+        sha256="ecbe2b568c8602549fa9e1d5833c63848f490a48d92e5d224d1eb2063e152cf8",
+        url=_MOBILENET_URL,
     ),
 }
 

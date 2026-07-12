@@ -129,3 +129,4 @@ audit is conducted in T0.3 and will be appended below.
 | Source | Files | License | Commit | Notes |
 |--------|-------|---------|--------|-------|
 | https://github.com/rdroste/unisal | `_unisal/_model.py`, `_unisal/_mobilenet.py`, `_unisal/_cgru.py` | Apache 2.0 | HEAD (2026-07-12) | Inference-only subset; training/dataset code removed. `_model.py` modified to remove training methods and KwConfigClass; `_mobilenet.py` and `_cgru.py` are unmodified except for the license header.
+| https://github.com/rdroste/unisal | `mobilenet_v2.pth.tar` (14,205,652 B, SHA-256 `ecbe2b56…`) | Apache 2.0 | Bundled in UNISAL repo | ImageNet-pretrained MobileNetV2 backbone. Bundled in UNISAL under same Apache 2.0 license; no separate NOTICE in the upstream. Redistribution: ✅ per Apache 2.0.

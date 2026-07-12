@@ -17,7 +17,6 @@
 # Original: unisal/unisal/models/MobileNetV2.py
 
 import math
-from pathlib import Path
 
 import torch
 import torch.nn as nn
@@ -194,8 +193,14 @@ class MobileNetV2(nn.Module):
         self.feat_8x_channels = int(interverted_residual_setting[-5][1] * widen_factor)
 
         if self.pretrained:
+            # HotGaze modification: load backbone from weight cache, not bundled path.
+            # The mobilenet_v2.pth.tar file is downloaded via hotgaze.weights and
+            # cached in ~/.cache/hotgaze/.  No binary is committed to the repo.
+            from hotgaze.weights import download_weight
+
+            weight_path = download_weight("mobilenet_backbone")
             state_dict = torch.load(
-                Path(__file__).resolve().parent / "weights/mobilenet_v2.pth.tar",
+                weight_path,
                 map_location=(
                     torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
                 ),

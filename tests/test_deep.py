@@ -131,8 +131,13 @@ class TestDeepCLIErrors:
 
 @pytest.mark.deep
 class TestSaliencyDeepReal:
-    def test_real_weights_load_and_predict(self) -> None:
-        """Full pipeline with real UNISAL weights."""
+    def test_real_weights_astronaut_face(self) -> None:
+        """Load real UNISAL, run on scikit-image astronaut, verify face detected.
+
+        The astronaut image (512×512) has Eileen Collins' face at roughly
+        x ∈ [180, 320], y ∈ [60, 170].  The top focal point from UNISAL
+        should land in that region.
+        """
         pytest.importorskip("torch")
         try:
             from hotgaze.layers.saliency_deep import SaliencyDeep, load_unisal
@@ -141,10 +146,17 @@ class TestSaliencyDeepReal:
         except FileNotFoundError:
             pytest.skip("UNISAL weights not yet published")
 
-        layer = SaliencyDeep(model)
-        img = np.random.randint(0, 255, (128, 256, 3), dtype=np.uint8)
-        result = layer.compute(img)
+        from skimage import data
 
-        assert result.shape == (128, 256)
-        assert result.dtype == np.float32
-        assert result.max() - result.min() > 0.01
+        astronaut = data.astronaut()  # (512, 512, 3) uint8 RGB
+        layer = SaliencyDeep(model)
+        result = layer.compute(astronaut)
+
+        from hotgaze.scoring import find_focal_points
+
+        am = type("AM", (), {"original_size": (512, 512), "heatmap": result})()
+        focal = find_focal_points(am, n=5)
+        assert len(focal) >= 1, "No focal points found"
+        top = focal[0]
+        assert 180 <= top["x"] <= 320, f"Focal point x={top['x']} outside face region"
+        assert 60 <= top["y"] <= 170, f"Focal point y={top['y']} outside face region"
