@@ -81,7 +81,7 @@ def run_engine(
 
     # Build default layers if not provided
     if layers is None:
-        layers = _default_fast_layers()
+        layers = _default_deep_layers() if config.backend == "deep" else _default_fast_layers()
 
     # Run each enabled layer
     layer_maps: list[np.ndarray] = []
@@ -135,6 +135,35 @@ def _default_fast_layers() -> dict[str, SignalLayer]:
     return {
         "saliency": SaliencyFast(),
         "contrast": Contrast(),
+        "center_bias": CenterBias(),
+        "gaze_flow": GazeFlow(),
+    }
+
+
+def _default_deep_layers() -> dict[str, SignalLayer]:
+    """Build the default set of deep-backend layers.
+
+    Uses the pretrained UNISAL model with center_bias + gaze_flow priors.
+    Lazy-imports torch — raises ImportError with actionable message if missing.
+    """
+    try:
+        from .layers.saliency_deep import SaliencyDeep, load_unisal
+    except ImportError:
+        raise ImportError(
+            "The deep backend requires PyTorch. Install with: pip install hotgaze[deep]"
+        ) from None
+
+    from .layers.center_bias import CenterBias
+    from .layers.gaze_flow import GazeFlow
+
+    try:
+        model = load_unisal()
+    except FileNotFoundError:
+        raise
+    except Exception as e:
+        raise RuntimeError(f"Failed to load deep backend model: {e}") from e
+    return {
+        "saliency": SaliencyDeep(model),
         "center_bias": CenterBias(),
         "gaze_flow": GazeFlow(),
     }

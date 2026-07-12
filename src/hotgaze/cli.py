@@ -21,6 +21,14 @@ from .scoring import (
     scores_to_json,
 )
 
+
+def _get_config(backend: str) -> EngineConfig:
+    """Return the EngineConfig for a given backend."""
+    if backend == "deep":
+        return EngineConfig.deep_default()
+    return EngineConfig.fast_default()
+
+
 _SUPPORTED_FORMATS = {".png", ".jpg", ".jpeg", ".webp"}
 
 
@@ -52,7 +60,9 @@ def main() -> None:
     callback=lambda ctx, param, value: _validate_image_format(value),
 )
 @click.option("-o", "--output", default=None, help="Output PNG path (default: IMG_overlay.png)")
-@click.option("--backend", default="fast", type=click.Choice(["fast"]), help="Saliency backend")
+@click.option(
+    "--backend", default="fast", type=click.Choice(["fast", "deep"]), help="Saliency backend"
+)
 @click.option(
     "--alpha",
     default=0.6,
@@ -72,7 +82,7 @@ def run(image: str, output: str | None, backend: str, alpha: float, colormap: st
         output = str(p.parent / f"{p.stem}_overlay.png")
 
     try:
-        config = EngineConfig.fast_default()
+        config = _get_config(backend)
         attn = run_engine(image, config=config)
 
         original = _open_original(image)
@@ -103,7 +113,9 @@ def run(image: str, output: str | None, backend: str, alpha: float, colormap: st
     default=False,
     help="Output canonical JSON (sorted keys, 6 dp floats).",
 )
-@click.option("--backend", default="fast", type=click.Choice(["fast"]), help="Saliency backend")
+@click.option(
+    "--backend", default="fast", type=click.Choice(["fast", "deep"]), help="Saliency backend"
+)
 def score(image: str, region: tuple[str, ...], json_output: bool, backend: str) -> None:
     """Score attention on IMAGE by named regions.
 
@@ -111,7 +123,7 @@ def score(image: str, region: tuple[str, ...], json_output: bool, backend: str) 
     canonical machine-readable JSON to stdout.
     """
     try:
-        config = EngineConfig.fast_default()
+        config = _get_config(backend)
         attn = run_engine(image, config=config)
 
         scored, focal = score_regions(attn, list(region))
@@ -182,7 +194,9 @@ def _print_score_table(regions: list[dict[str, Any]], focal_points: list[dict[st
     default=False,
     help="Output canonical JSON (sorted keys, 6 dp floats).",
 )
-@click.option("--backend", default="fast", type=click.Choice(["fast"]), help="Saliency backend")
+@click.option(
+    "--backend", default="fast", type=click.Choice(["fast", "deep"]), help="Saliency backend"
+)
 def compare(
     image_a: str,
     image_b: str,
@@ -196,7 +210,7 @@ def compare(
     compares focal-point movement and a 3×3 grid of attention-share deltas.
     """
     try:
-        config = EngineConfig.fast_default()
+        config = _get_config(backend)
         attn_a = run_engine(image_a, config=config)
         attn_b = run_engine(image_b, config=config)
 
@@ -340,7 +354,26 @@ def info() -> None:
     click.echo()
     click.echo("Available backends:")
     click.echo("  fast   — heuristic (spectral residual + contrast + center bias + gaze flow)")
-    click.echo("  deep   — pretrained saliency model (requires hotgaze[deep], Phase 3)")
+
+    # Deep backend status
+    try:
+        import torch  # noqa: F401
+
+        from .weights import get_cache_dir as _wcache
+
+        weights_cached = (_wcache() / "weights_best.pth").exists()
+        if weights_cached:
+            click.echo("  deep   — UNISAL pretrained model (torch ✓, weights cached)")
+        else:
+            click.echo(
+                "  deep   — UNISAL pretrained model (torch ✓, weights NOT cached — "
+                "will download on first use)"
+            )
+    except ImportError:
+        click.echo(
+            "  deep   — UNISAL pretrained model (torch NOT installed — pip install hotgaze[deep])"
+        )
+
     click.echo()
     click.echo("Run 'hotgaze run --help' for usage.")
 

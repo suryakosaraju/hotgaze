@@ -1,0 +1,48 @@
+# HotGaze nightly — deep backend tests
+#
+# Runs pytest -m deep on a schedule. Because UNISAL weights are not yet
+# published (see PROGRESS.md Orchestrator TODOs), deep tests skip with a
+# reason — nightly is expected to be green-by-skip until weights are live.
+# Once weights are published, this workflow will exercise the full deep
+# pipeline nightly.
+#
+# Weight cache is persisted via actions/cache, keyed by the checksums
+# recorded in LICENSES-THIRD-PARTY.md.
+
+name: Nightly
+
+on:
+  schedule:
+    - cron: "0 3 * * *"  # 3 AM UTC daily
+  workflow_dispatch:  # allow manual trigger
+
+jobs:
+  deep:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.10", "3.12"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache weight files
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/hotgaze
+          key: hotgaze-weights-${{ hashFiles('LICENSES-THIRD-PARTY.md') }}
+          restore-keys: hotgaze-weights-
+
+      - name: Install package with deep deps
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install -e ".[deep,dev]"
+
+      - name: Pytest deep
+        run: pytest -m deep -v

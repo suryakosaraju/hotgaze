@@ -13,3 +13,11 @@ __all__ = [
     "CenterBias",
     "GazeFlow",
 ]
+
+# SaliencyDeep is lazy-imported to keep torch optional
+try:
+    from .saliency_deep import SaliencyDeep  # noqa: F401
+
+    __all__.append("SaliencyDeep")
+except ImportError:
+    pass

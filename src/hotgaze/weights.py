@@ -20,7 +20,7 @@ import click
 # We re-host weight files on our own GitHub Release per CLAUDE.md hosting plan
 # (stable URL, checksum-pinnable, no Google Drive).
 #
-_PLACEHOLDER_BASE = "https://github.com/hotgaze/hotgaze/releases/download/v0.1.0"
+_PLACEHOLDER_BASE = "https://github.com/suryakosaraju/hotgaze/releases/download/v0.1.0"
 
 _UNISAL_URL = f"{_PLACEHOLDER_BASE}/weights_best.pth"
 _UNISAL_MIT1003_URL = f"{_PLACEHOLDER_BASE}/weights_ft_mit1003.pth"

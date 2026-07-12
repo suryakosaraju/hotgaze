@@ -123,3 +123,9 @@ audit is conducted in T0.3 and will be appended below.
 #### Default deep backend
 
 **UNISAL** — best quality among PyTorch-native models with permissive license (Apache 2.0) AND redistribution rights. PyTorch-native (no TF/ONNX complexity). Two weight variants available (SALICON-trained and MIT1003-fine-tuned).
+
+#### Vendored code
+
+| Source | Files | License | Commit | Notes |
+|--------|-------|---------|--------|-------|
+| https://github.com/rdroste/unisal | `_unisal/_model.py`, `_unisal/_mobilenet.py`, `_unisal/_cgru.py` | Apache 2.0 | HEAD (2026-07-12) | Inference-only subset; training/dataset code removed. `_model.py` modified to remove training methods and KwConfigClass; `_mobilenet.py` and `_cgru.py` are unmodified except for the license header.
