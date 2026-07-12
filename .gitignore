@@ -38,3 +38,4 @@ tests/fixtures/*.png
 src/hotgaze/_unisal/weights/
 *.pth.tar
 CLAUDE.md\nDESIGN.md\nPLAN.md\nPROGRESS.md
+CONTRIBUTING.md
