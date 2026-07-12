@@ -50,8 +50,8 @@ dev = [
 hotgaze = "hotgaze.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/hotgaze/hotgaze"
-Repository = "https://github.com/hotgaze/hotgaze"
+Homepage = "https://github.com/suryakosaraju/hotgaze"
+Repository = "https://github.com/suryakosaraju/hotgaze"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/hotgaze"]
