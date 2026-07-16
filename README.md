@@ -1,14 +1,14 @@
 # HotGaze ⏿
 
 [![CI](https://github.com/suryakosaraju/hotgaze/actions/workflows/ci.yml/badge.svg)](https://github.com/suryakosaraju/hotgaze/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](pyproject.toml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/suryakosaraju/hotgaze/blob/main/LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://github.com/suryakosaraju/hotgaze/blob/main/pyproject.toml)
 
 Attention heatmaps for UI screenshots — with **numeric scores and A/B compare**, not just pretty pictures.
 
 Predict where users' eyes land on a design, get a machine-readable attention share for any region, and diff two variants to see which one wins and by how much. Local, offline, MIT-licensed.
 
-![Original design next to its HotGaze attention overlay — headline, CTA, and sidebar items glow hot](docs/demo.png)
+![Original design next to its HotGaze attention overlay — headline, CTA, and sidebar items glow hot](https://raw.githubusercontent.com/suryakosaraju/hotgaze/main/docs/demo.png)
 
 > **Status: v0.1 alpha.** The fast heuristic backend, region scoring, A/B compare, and deep UNISAL backend are shipping. Faces layer (YuNet) is available via `--layers faces`. API and CLI may change before v1.
 
@@ -109,9 +109,9 @@ Variant B lost 37% of the CTA's attention share. That's an actionable number, no
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](https://github.com/suryakosaraju/hotgaze/blob/main/LICENSE).
 
-Third-party models and dependencies are recorded with their licenses and redistribution status in [LICENSES-THIRD-PARTY.md](LICENSES-THIRD-PARTY.md).
+Third-party models and dependencies are recorded with their licenses and redistribution status in [LICENSES-THIRD-PARTY.md](https://github.com/suryakosaraju/hotgaze/blob/main/LICENSES-THIRD-PARTY.md).
 
 ## Credits
 

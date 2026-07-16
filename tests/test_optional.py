@@ -91,3 +91,58 @@ class TestInfoNoTorch:
             runner = CliRunner()
             result = runner.invoke(main, ["info"])
             assert result.exit_code == 0
+
+
+# ── regression: --layers faces actually enables the layer ────────────────────
+
+
+class TestLayersFlagEnablesFaces:
+    def test_layers_faces_actually_enabled(self) -> None:
+        """--layers faces flag actually adds the layer with weight 0.15.
+
+        Regression test for bug: line 118 re-assigned w = config.weights,
+        discarding the renormalized copy.  Fixed by removing that line.
+        """
+        _require_yunet()
+
+        import numpy as np
+
+        from hotgaze.config import EngineConfig, LayerWeights
+        from hotgaze.engine import run_engine
+
+        # Build a config with faces enabled
+        config = EngineConfig(
+            backend="fast",
+            weights=LayerWeights(saliency=0.5, contrast=0.2, center_bias=0.2, gaze_flow=0.1),
+            extra_layers=["faces"],
+        )
+
+        # Run without faces first
+        config_no_faces = EngineConfig(
+            backend="fast",
+            weights=LayerWeights(saliency=0.5, contrast=0.2, center_bias=0.2, gaze_flow=0.1),
+            extra_layers=[],
+        )
+
+        astronaut = _astronaut()
+        import tempfile
+        from pathlib import Path
+
+        from PIL import Image
+
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+            Image.fromarray(astronaut).save(tmp.name)
+            tmp_path = tmp.name
+
+        try:
+            result_faces = run_engine(tmp_path, config=config)
+            result_no_faces = run_engine(tmp_path, config=config_no_faces)
+
+            # The two maps should differ — faces layer adds Gaussian blobs
+            diff = np.abs(result_faces.heatmap - result_no_faces.heatmap).max()
+            assert diff > 1e-6, (
+                f"Faces layer had no effect on attention map (max diff={diff:.10f}). "
+                "The --layers faces flag is not actually enabling the layer."
+            )
+        finally:
+            Path(tmp_path).unlink(missing_ok=True)

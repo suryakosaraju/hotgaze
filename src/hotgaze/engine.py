@@ -115,7 +115,6 @@ def run_engine(
     # Run each enabled layer
     layer_maps: list[np.ndarray] = []
     total_weight = 0.0
-    w = config.weights
 
     for name, layer in layers.items():
         weight = getattr(w, name, 0.0)
