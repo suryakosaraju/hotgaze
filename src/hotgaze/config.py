@@ -14,7 +14,6 @@ class LayerWeights(BaseModel):
     contrast: float = 0.2
     center_bias: float = 0.2
     gaze_flow: float = 0.1
-    text: float = 0.0
     faces: float = 0.0
 
 

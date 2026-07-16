@@ -39,12 +39,12 @@ def _parse_layers(layers_str: str) -> list[str]:
         return []
     names = [n.strip() for n in layers_str.split(",") if n.strip()]
     for n in names:
-        if n not in ("faces", "text"):
-            raise click.BadParameter(f"Unknown layer: {n!r}. Allowed: faces, text")
+        if n not in ("faces",):
+            raise click.BadParameter(f"Unknown layer: {n!r}. Allowed: faces")
     return names
 
 
-_VALID_LAYERS = {"faces", "text"}
+_VALID_LAYERS = {"faces"}
 
 
 def _validate_image_format(path: str) -> str:
@@ -93,7 +93,7 @@ def main() -> None:
 @click.option(
     "--layers",
     default="",
-    help="Optional layers to enable: faces,text (comma-separated)",
+    help="Optional layers to enable: faces (comma-separated)",
 )
 def run(
     image: str,
@@ -147,7 +147,7 @@ def run(
 @click.option(
     "--layers",
     default="",
-    help="Optional layers to enable: faces,text (comma-separated)",
+    help="Optional layers to enable: faces (comma-separated)",
 )
 def score(
     image: str, region: tuple[str, ...], json_output: bool, backend: str, layers: str
@@ -236,7 +236,7 @@ def _print_score_table(regions: list[dict[str, Any]], focal_points: list[dict[st
 @click.option(
     "--layers",
     default="",
-    help="Optional layers to enable: faces,text (comma-separated)",
+    help="Optional layers to enable: faces (comma-separated)",
 )
 def compare(
     image_a: str,
@@ -418,13 +418,12 @@ def info() -> None:
         )
 
     click.echo()
-    click.echo("Optional layers (enable with --layers faces,text):")
+    click.echo("Optional layers (enable with --layers faces):")
     yunet_cached = (_wcache() / "face_detection_yunet_2023mar.onnx").exists()
     if yunet_cached:
         click.echo("  faces — YuNet face detector (MIT, ONNX cached)")
     else:
         click.echo("  faces — YuNet face detector (MIT, ONNX not cached)")
-    click.echo("  text  — MSER text-region heuristic (offline, no model)")
 
     click.echo()
     click.echo("Run 'hotgaze run --help' for usage.")

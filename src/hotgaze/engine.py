@@ -83,17 +83,13 @@ def run_engine(
     if layers is None:
         layers = _default_deep_layers() if config.backend == "deep" else _default_fast_layers()
 
-    # Add optional extra layers (faces, text) if requested
+    # Add optional extra layers if requested
     layers = dict(layers)  # shallow copy
     for lname in config.extra_layers:
         if lname == "faces" and "faces" not in layers:
             from .layers.faces import Faces
 
             layers["faces"] = Faces()
-        elif lname == "text" and "text" not in layers:
-            from .layers.text import Text
-
-            layers["text"] = Text()
 
     # Renormalize weights if extra layers enabled
     w = config.weights
