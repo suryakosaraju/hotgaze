@@ -10,7 +10,7 @@ Predict where users' eyes land on a design, get a machine-readable attention sha
 
 ![Original design next to its HotGaze attention overlay — headline, CTA, and sidebar items glow hot](docs/demo.png)
 
-> **Status: v0.1 alpha.** The fast heuristic backend, region scoring, and A/B compare are shipping and tested. The deep saliency model (UNISAL) lands next. API and CLI may change before v1.
+> **Status: v0.1 alpha.** The fast heuristic backend, region scoring, A/B compare, and deep UNISAL backend are shipping. Faces layer (YuNet) is available via `--layers faces`. API and CLI may change before v1.
 
 ## Why this exists
 
@@ -80,11 +80,20 @@ Variant B lost 37% of the CTA's attention share. That's an actionable number, no
 ## What's in the box
 
 - **CLI**: `hotgaze run`, `hotgaze score`, `hotgaze compare`, `hotgaze info`.
-- **Fast heuristic backend** (v0.1, shipping): spectral-residual saliency + contrast + center bias + F-pattern reading prior. No downloads, works offline, sub-second on CPU.
-- **Deep saliency backend** (v0.2, in progress): [UNISAL](https://github.com/rdroste/unisal) (Apache-2.0). Optional install: `pip install hotgaze[deep]`.
-- **Face and text layers** (v0.2, in progress): [YuNet](https://github.com/opencv/opencv_zoo) (MIT) for faces, MSER-based text detection.
+- **Fast heuristic backend** (default): spectral-residual saliency + contrast + center bias + F-pattern reading prior. No downloads, works offline, sub-second on CPU.
+- **Deep saliency backend** (`--backend deep`): [UNISAL](https://github.com/rdroste/unisal) (Apache-2.0), CPU-only, deterministic per-machine. Install: `pip install hotgaze[deep]`. Weights download on first use (one-time, ~30 MB).
+- **Faces layer** (`--layers faces`): [YuNet](https://github.com/opencv/opencv_zoo) (MIT) face detection adds attention blobs over detected faces.
 - **Versioned JSON output**: schema v1 covers both score and compare modes so downstream tools don't break on new features.
 - **Deterministic**: same image + same config + same machine → byte-identical JSON.
+
+## Backends
+
+| Backend | Default | What it uses | Quality |
+|---------|---------|-------------|---------|
+| `fast` | ✅ | Spectral residual + contrast + center bias + gaze flow | Strong on flat UI screenshots; zero downloads |
+| `deep` | | UNISAL pretrained saliency model (PyTorch) | Better on natural images; on flat UIs the fast backend often matches or exceeds it — the domain gap is real. |
+
+`--backend deep` requires `pip install hotgaze[deep]` and a one-time weight download on first use. Both backends are fully offline after the initial fetch.
 
 ## What HotGaze isn't
 
@@ -94,9 +103,8 @@ Variant B lost 37% of the CTA's attention share. That's an actionable number, no
 
 ## Roadmap
 
-- **v0.2** — deep saliency backend (UNISAL), face + text layers, PyPI release.
-- **v0.3** — GitHub Action for attention regression testing on PR screenshots.
-- **v0.4+** — macOS wrapper, Figma plugin, benchmarking against public saliency datasets.
+- **v0.2** — PyPI release, GitHub Action for attention regression testing on PR screenshots.
+- **v0.3+** — UI-tuned text/saliency models, Figma plugin, macOS wrapper, benchmarking against public saliency datasets.
 
 
 ## License
