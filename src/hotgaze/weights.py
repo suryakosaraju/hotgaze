@@ -15,12 +15,18 @@ import click
 
 # ── Placeholder URLs ─────────────────────────────────────────────────────────
 #
-# TODO(orchestrator): replace with real GitHub Release URLs before first publish.
-# These must point to the HotGaze GitHub Releases page, not the upstream repos.
-# We re-host weight files on our own GitHub Release per CLAUDE.md hosting plan
-# (stable URL, checksum-pinnable, no Google Drive).
+# TODO(orchestrator): create a GitHub Release tagged "weights-v1" with these
+# assets (checksums pinned in the registry below — they must match exactly):
+#   - weights_best.pth          (UNISAL SALICON,     4a9157...)
+#   - weights_ft_mit1003.pth    (UNISAL MIT1003,     a6de8e...)
+#   - mobilenet_v2.pth.tar      (MobileNetV2 backbone, ecbe2b...)
+#   - face_detection_yunet_2023mar.onnx  (YuNet,      8f2383...)
 #
-_PLACEHOLDER_BASE = "https://github.com/suryakosaraju/hotgaze/releases/download/v0.1.0"
+# Weights are hosted on a dedicated "weights-v1" release so code tags
+# (v0.1.0, v0.2.0, …) stay free for PyPI publishing and never re-upload
+# 45 MB of assets.  Weight files don't change with code versions.
+#
+_PLACEHOLDER_BASE = "https://github.com/suryakosaraju/hotgaze/releases/download/weights-v1"
 
 _UNISAL_URL = f"{_PLACEHOLDER_BASE}/weights_best.pth"
 _UNISAL_MIT1003_URL = f"{_PLACEHOLDER_BASE}/weights_ft_mit1003.pth"
