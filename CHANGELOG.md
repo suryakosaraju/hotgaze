@@ -12,7 +12,7 @@ Initial release.
 - **Region scoring**: `hotgaze score IMG --region name:x,y,w,h --json` → canonical JSON with attention share, peak value, and rank per region.
 - **A/B comparison**: `hotgaze compare A.png B.png [--region ...]` → per-region attention-share deltas + 3×3 spatial grid + focal-point movement.
 - **Focal points**: local maxima via OpenCV dilate-based max-filter, ranked by attention value.
-- **Faces layer** (`--layers faces`): YuNet face detector (MIT) adds Gaussian attention blobs over detected faces.
+- **Faces layer** (`--layers faces`): YuNet face detector (MIT) adds Gaussian attention blobs over detected faces. Default weight 0.50 — tuned so enabling the layer shifts the focal point onto detected faces on portraits; zero effect on faceless UI images.
 - **Canonical JSON**: schema v1, sorted keys, floats rounded to 6 dp, byte-identical across runs on the same machine.
 - **CLI**: `hotgaze run`, `hotgaze score`, `hotgaze compare`, `hotgaze info`.
 - **Weight manager**: download-on-first-use with SHA-256 verification, atomic cache, `click.progressbar`.

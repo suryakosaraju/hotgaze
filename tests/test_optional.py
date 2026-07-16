@@ -146,3 +146,75 @@ class TestLayersFlagEnablesFaces:
             )
         finally:
             Path(tmp_path).unlink(missing_ok=True)
+
+    def test_faces_weight_hits_face_on_astronaut(self) -> None:
+        """At default weight 0.50, the top focal point lands in the face region."""
+        _require_yunet()
+
+        from hotgaze.config import EngineConfig, LayerWeights
+        from hotgaze.engine import run_engine
+        from hotgaze.scoring import find_focal_points
+
+        config = EngineConfig(
+            backend="fast",
+            weights=LayerWeights(saliency=0.5, contrast=0.2, center_bias=0.2, gaze_flow=0.1),
+            extra_layers=["faces"],
+        )
+
+        astronaut = _astronaut()
+        import tempfile
+        from pathlib import Path
+
+        from PIL import Image
+
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+            Image.fromarray(astronaut).save(tmp.name)
+            tmp_path = tmp.name
+
+        try:
+            result = run_engine(tmp_path, config=config)
+            focal = find_focal_points(result, n=3)
+            assert len(focal) >= 1, "No focal points"
+            top = focal[0]
+            assert 180 <= top["x"] <= 320, (
+                f"Focal point x={top['x']} outside face region [180,320] "
+                f"— faces weight may be too low"
+            )
+            assert 60 <= top["y"] <= 170, (
+                f"Focal point y={top['y']} outside face region [60,170] "
+                f"— faces weight may be too low"
+            )
+        finally:
+            Path(tmp_path).unlink(missing_ok=True)
+
+    def test_faces_no_effect_on_faceless_image(self) -> None:
+        """Enabling faces on a faceless image does not shift focal points."""
+        _require_yunet()
+
+        from hotgaze.config import EngineConfig, LayerWeights
+        from hotgaze.engine import run_engine
+        from hotgaze.scoring import find_focal_points
+
+        config_faces = EngineConfig(
+            backend="fast",
+            weights=LayerWeights(saliency=0.5, contrast=0.2, center_bias=0.2, gaze_flow=0.1),
+            extra_layers=["faces"],
+        )
+        config_none = EngineConfig(
+            backend="fast",
+            weights=LayerWeights(saliency=0.5, contrast=0.2, center_bias=0.2, gaze_flow=0.1),
+            extra_layers=[],
+        )
+
+        result_faces = run_engine("tests/fixtures/landing.png", config=config_faces)
+        result_none = run_engine("tests/fixtures/landing.png", config=config_none)
+
+        focal_faces = find_focal_points(result_faces, n=3)
+        focal_none = find_focal_points(result_none, n=3)
+
+        assert len(focal_faces) >= 1 and len(focal_none) >= 1
+        dx = abs(focal_faces[0]["x"] - focal_none[0]["x"])
+        dy = abs(focal_faces[0]["y"] - focal_none[0]["y"])
+        assert dx <= 2 and dy <= 2, (
+            f"Faces layer shifted focal point by ({dx},{dy})px on faceless image"
+        )

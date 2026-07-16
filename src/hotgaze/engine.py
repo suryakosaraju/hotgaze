@@ -97,7 +97,7 @@ def run_engine(
         base_keys = ["saliency", "contrast", "center_bias", "gaze_flow"]
         base_weight = sum(getattr(w, k, 0.0) for k in base_keys)
         extra_weight = sum(
-            0.15 if getattr(w, ln, 0.0) == 0 and ln in config.extra_layers else getattr(w, ln, 0.0)
+            0.50 if getattr(w, ln, 0.0) == 0 and ln in config.extra_layers else getattr(w, ln, 0.0)
             for ln in config.extra_layers
         )
         if base_weight > 0 and extra_weight > 0:
@@ -110,7 +110,7 @@ def run_engine(
                     setattr(w, k, round(current * scale, 6))
             for ln in config.extra_layers:
                 if getattr(w, ln, 0.0) == 0:
-                    setattr(w, ln, 0.15)
+                    setattr(w, ln, 0.50)
 
     # Run each enabled layer
     layer_maps: list[np.ndarray] = []
