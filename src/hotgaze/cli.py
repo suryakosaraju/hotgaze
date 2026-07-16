@@ -398,11 +398,11 @@ def info() -> None:
     click.echo("Available backends:")
     click.echo("  fast   — heuristic (spectral residual + contrast + center bias + gaze flow)")
 
+    from .weights import get_cache_dir as _wcache
+
     # Deep backend status
     try:
         import torch  # noqa: F401
-
-        from .weights import get_cache_dir as _wcache
 
         weights_cached = (_wcache() / "weights_best.pth").exists()
         if weights_cached:

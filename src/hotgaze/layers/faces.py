@@ -61,8 +61,10 @@ class Faces(SignalLayer):
 
         ygrid, xgrid = np.mgrid[0:h, 0:w].astype(np.float32)
 
-        for face in faces:
-            fx, fy, fw, fh = face[0:4].astype(np.int32)
+        faces_arr = np.asarray(faces, dtype=np.float32)
+        for row in range(faces_arr.shape[0]):
+            face = faces_arr[row]
+            fx, fy, fw, fh = (int(v) for v in face[:4])
             confidence = float(face[14]) if face.shape[0] > 14 else 1.0
 
             cx = fx + fw / 2.0

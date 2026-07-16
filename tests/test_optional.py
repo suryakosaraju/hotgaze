@@ -1,10 +1,19 @@
-"""Tests for optional layers: faces (YuNet) and text (MSER)."""
+"""Tests for optional layers: faces (YuNet)."""
 
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
-# ── Helpers ──────────────────────────────────────────────────────────────────
+
+def _require_yunet():
+    """Skip the test if the YuNet ONNX weight is not cached."""
+    try:
+        from hotgaze.weights import download_weight
+
+        download_weight("yunet")
+    except FileNotFoundError:
+        pytest.skip("YuNet weight not cached")
 
 
 def _astronaut() -> np.ndarray:
@@ -22,7 +31,7 @@ def _blank(h: int = 200, w: int = 200) -> np.ndarray:
 
 class TestFaces:
     def test_astronaut_face_detected(self) -> None:
-        """YuNet finds the astronaut's face and creates a strong attention blob."""
+        _require_yunet()
         from hotgaze.layers.faces import Faces
         from hotgaze.scoring import find_focal_points
 
@@ -34,12 +43,11 @@ class TestFaces:
         focal = find_focal_points(am, n=3)
         assert len(focal) >= 1, "No focal points — face not detected"
         top = focal[0]
-        # Face region of astronaut: approx x 180-320, y 60-170
         assert 180 <= top["x"] <= 320, f"x={top['x']} outside face region [180,320]"
         assert 60 <= top["y"] <= 170, f"y={top['y']} outside face region [60,170]"
 
     def test_no_face_blank_near_zero(self) -> None:
-        """Blank/no-face image → near-zero attention map."""
+        _require_yunet()
         from hotgaze.layers.faces import Faces
 
         layer = Faces()
@@ -47,6 +55,7 @@ class TestFaces:
         assert result.max() < 0.01, f"Blank image produced non-zero map: max={result.max():.4f}"
 
     def test_output_contract(self) -> None:
+        _require_yunet()
         from hotgaze.layers.faces import Faces
 
         layer = Faces()
@@ -56,6 +65,7 @@ class TestFaces:
         assert 0.0 <= result.min() <= result.max() <= 1.0
 
     def test_deterministic(self) -> None:
+        _require_yunet()
         from hotgaze.layers.faces import Faces
 
         layer = Faces()
@@ -63,3 +73,21 @@ class TestFaces:
         r1 = layer.compute(img)
         r2 = layer.compute(img)
         np.testing.assert_array_equal(r1, r2)
+
+
+# ── info without torch ───────────────────────────────────────────────────────
+
+
+class TestInfoNoTorch:
+    def test_info_runs_without_torch(self, monkeypatch) -> None:
+        """hotgaze info exits 0 even when torch is not installed."""
+        from unittest.mock import patch
+
+        with patch.dict("sys.modules", {"torch": None}, clear=False):
+            from click.testing import CliRunner
+
+            from hotgaze.cli import main
+
+            runner = CliRunner()
+            result = runner.invoke(main, ["info"])
+            assert result.exit_code == 0
