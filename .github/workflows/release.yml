@@ -1,0 +1,41 @@
+# HotGaze release pipeline
+#
+# On tag push (v*), builds sdist + wheel and publishes to PyPI via
+# trusted publishing.  No tokens or secrets needed — PyPI trusts this
+# repo + workflow combination after one-time setup by the orchestrator.
+#
+# Prerequisites (orchestrator, do before first tag push):
+#   1. Create the weights-v1 GitHub Release with 4 assets.
+#   2. Configure PyPI trusted publishing:
+#        PyPI → Settings → Publishing → Add → repo: suryakosaraju/hotgaze,
+#        workflow: release.yml, environment: (leave blank).
+#   3. Push a v* tag (e.g. v0.1.0).
+
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # required for trusted publishing
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install build tools
+        run: python3 -m pip install --upgrade pip build
+
+      - name: Build sdist + wheel
+        run: python -m build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
