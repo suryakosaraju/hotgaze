@@ -3,8 +3,10 @@
 from .base import SignalLayer
 from .center_bias import CenterBias
 from .contrast import Contrast
+from .faces import Faces
 from .gaze_flow import GazeFlow
 from .saliency_fast import SaliencyFast
+from .text import Text
 
 __all__ = [
     "SignalLayer",
@@ -12,6 +14,8 @@ __all__ = [
     "Contrast",
     "CenterBias",
     "GazeFlow",
+    "Faces",
+    "Text",
 ]
 
 # SaliencyDeep is lazy-imported to keep torch optional

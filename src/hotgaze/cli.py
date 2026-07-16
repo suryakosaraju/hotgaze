@@ -22,14 +22,29 @@ from .scoring import (
 )
 
 
-def _get_config(backend: str) -> EngineConfig:
+def _get_config(backend: str, extra_layers: list[str] | None = None) -> EngineConfig:
     """Return the EngineConfig for a given backend."""
-    if backend == "deep":
-        return EngineConfig.deep_default()
-    return EngineConfig.fast_default()
+    cfg = EngineConfig.deep_default() if backend == "deep" else EngineConfig.fast_default()
+    if extra_layers:
+        cfg.extra_layers = extra_layers
+    return cfg
 
 
 _SUPPORTED_FORMATS = {".png", ".jpg", ".jpeg", ".webp"}
+
+
+def _parse_layers(layers_str: str) -> list[str]:
+    """Parse comma-separated layer names, validating against allowed set."""
+    if not layers_str.strip():
+        return []
+    names = [n.strip() for n in layers_str.split(",") if n.strip()]
+    for n in names:
+        if n not in ("faces", "text"):
+            raise click.BadParameter(f"Unknown layer: {n!r}. Allowed: faces, text")
+    return names
+
+
+_VALID_LAYERS = {"faces", "text"}
 
 
 def _validate_image_format(path: str) -> str:
@@ -75,14 +90,27 @@ def main() -> None:
     type=click.Choice(["jet", "turbo"]),
     help="Heatmap colormap palette",
 )
-def run(image: str, output: str | None, backend: str, alpha: float, colormap: str) -> None:
+@click.option(
+    "--layers",
+    default="",
+    help="Optional layers to enable: faces,text (comma-separated)",
+)
+def run(
+    image: str,
+    output: str | None,
+    backend: str,
+    alpha: float,
+    colormap: str,
+    layers: str,
+) -> None:
     """Generate an attention heatmap overlay for IMAGE."""
     if output is None:
         p = Path(image)
         output = str(p.parent / f"{p.stem}_overlay.png")
 
     try:
-        config = _get_config(backend)
+        extra = _parse_layers(layers)
+        config = _get_config(backend, extra)
         attn = run_engine(image, config=config)
 
         original = _open_original(image)
@@ -116,14 +144,22 @@ def run(image: str, output: str | None, backend: str, alpha: float, colormap: st
 @click.option(
     "--backend", default="fast", type=click.Choice(["fast", "deep"]), help="Saliency backend"
 )
-def score(image: str, region: tuple[str, ...], json_output: bool, backend: str) -> None:
+@click.option(
+    "--layers",
+    default="",
+    help="Optional layers to enable: faces,text (comma-separated)",
+)
+def score(
+    image: str, region: tuple[str, ...], json_output: bool, backend: str, layers: str
+) -> None:
     """Score attention on IMAGE by named regions.
 
     Without --json, prints a human-readable table. With --json, outputs
     canonical machine-readable JSON to stdout.
     """
     try:
-        config = _get_config(backend)
+        extra = _parse_layers(layers)
+        config = _get_config(backend, extra)
         attn = run_engine(image, config=config)
 
         scored, focal = score_regions(attn, list(region))
@@ -197,12 +233,18 @@ def _print_score_table(regions: list[dict[str, Any]], focal_points: list[dict[st
 @click.option(
     "--backend", default="fast", type=click.Choice(["fast", "deep"]), help="Saliency backend"
 )
+@click.option(
+    "--layers",
+    default="",
+    help="Optional layers to enable: faces,text (comma-separated)",
+)
 def compare(
     image_a: str,
     image_b: str,
     region: tuple[str, ...],
     json_output: bool,
     backend: str,
+    layers: str,
 ) -> None:
     """Compare attention between two images A and B.
 
@@ -210,7 +252,8 @@ def compare(
     compares focal-point movement and a 3×3 grid of attention-share deltas.
     """
     try:
-        config = _get_config(backend)
+        extra = _parse_layers(layers)
+        config = _get_config(backend, extra)
         attn_a = run_engine(image_a, config=config)
         attn_b = run_engine(image_b, config=config)
 
@@ -373,6 +416,15 @@ def info() -> None:
         click.echo(
             "  deep   — UNISAL pretrained model (torch NOT installed — pip install hotgaze[deep])"
         )
+
+    click.echo()
+    click.echo("Optional layers (enable with --layers faces,text):")
+    yunet_cached = (_wcache() / "face_detection_yunet_2023mar.onnx").exists()
+    if yunet_cached:
+        click.echo("  faces — YuNet face detector (MIT, ONNX cached)")
+    else:
+        click.echo("  faces — YuNet face detector (MIT, ONNX not cached)")
+    click.echo("  text  — MSER text-region heuristic (offline, no model)")
 
     click.echo()
     click.echo("Run 'hotgaze run --help' for usage.")

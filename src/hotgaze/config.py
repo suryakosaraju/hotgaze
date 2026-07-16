@@ -25,6 +25,7 @@ class EngineConfig(BaseModel):
     working_long_edge: int = Field(default=1024, ge=256, le=4096)
     smooth_sigma: float = Field(default=5.0, ge=0.0, le=50.0)
     weights: LayerWeights = Field(default_factory=LayerWeights)
+    extra_layers: list[str] = Field(default_factory=list)
 
     @classmethod
     def fast_default(cls) -> EngineConfig:

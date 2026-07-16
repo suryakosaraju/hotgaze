@@ -37,5 +37,9 @@ tests/fixtures/*.png
 # Vendored-model backbone weights (downloaded on first use, never committed)
 src/hotgaze/_unisal/weights/
 *.pth.tar
-CLAUDE.md\nDESIGN.md\nPLAN.md\nPROGRESS.md
+CLAUDE.md
+DESIGN.md
+PLAN.md
+PROGRESS.md
+CONTRIBUTING.md
 CONTRIBUTING.md
