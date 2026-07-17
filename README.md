@@ -10,7 +10,7 @@ Predict where users' eyes land on a design, get a machine-readable attention sha
 
 ![Original design next to its HotGaze attention overlay — headline, CTA, and sidebar items glow hot](https://raw.githubusercontent.com/suryakosaraju/hotgaze/main/docs/demo.png)
 
-> **Status: v0.1 alpha.** The fast heuristic backend, region scoring, A/B compare, and deep UNISAL backend are shipping. Faces layer (YuNet) is available via `--layers faces`. API and CLI may change before v1.
+> **Status: v0.1 alpha — on PyPI.** The fast heuristic backend, region scoring, A/B compare, and deep UNISAL backend are shipping. Faces layer (YuNet) is available via `--layers faces`. API and CLI may change before v1.
 
 ## Why this exists
 
@@ -24,15 +24,20 @@ HotGaze outputs the picture too, but the picture isn't the point. The **numbers*
 
 ## Install
 
-Not on PyPI yet (v0.1 is a working-directory install):
+```bash
+pip install hotgaze          # core (fast backend)
+pip install "hotgaze[deep]"  # + deep UNISAL backend
+```
+
+Python 3.10+. Runs on macOS and Linux. No cloud, no API keys, no telemetry.
+
+### From source
 
 ```bash
 git clone https://github.com/suryakosaraju/hotgaze
 cd hotgaze
 pip install -e .
 ```
-
-Python 3.10+. Runs on macOS and Linux. No cloud, no API keys, no telemetry.
 
 ## Quickstart
 
@@ -103,7 +108,7 @@ Variant B lost 37% of the CTA's attention share. That's an actionable number, no
 
 ## Roadmap
 
-- **v0.2** — PyPI release, GitHub Action for attention regression testing on PR screenshots.
+- **v0.2** — GitHub Action for attention regression testing on PR screenshots.
 - **v0.3+** — UI-tuned text/saliency models, Figma plugin, macOS wrapper, benchmarking against public saliency datasets.
 
 
