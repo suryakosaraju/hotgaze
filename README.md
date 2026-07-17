@@ -3,10 +3,15 @@
 [![CI](https://github.com/suryakosaraju/hotgaze/actions/workflows/ci.yml/badge.svg)](https://github.com/suryakosaraju/hotgaze/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/suryakosaraju/hotgaze/blob/main/LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://github.com/suryakosaraju/hotgaze/blob/main/pyproject.toml)
+[![PyPI](https://img.shields.io/pypi/v/hotgaze)](https://pypi.org/project/hotgaze/)
 
 Attention heatmaps for UI screenshots — with **numeric scores and A/B compare**, not just pretty pictures.
 
 Predict where users' eyes land on a design, get a machine-readable attention share for any region, and diff two variants to see which one wins and by how much. Local, offline, MIT-licensed.
+
+```bash
+pip install hotgaze && hotgaze run screenshot.png
+```
 
 ![Original design next to its HotGaze attention overlay — headline, CTA, and sidebar items glow hot](https://raw.githubusercontent.com/suryakosaraju/hotgaze/main/docs/demo.png)
 
