@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "hotgaze"
-version = "0.1.0"
+version = "0.1.1"
 description = "Predict visual attention on UI screenshots — heatmap overlays and machine-readable attention scores"
 readme = "README.md"
 license = {text = "MIT"}
