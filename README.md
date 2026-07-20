@@ -126,3 +126,5 @@ Third-party models and dependencies are recorded with their licenses and redistr
 ## Credits
 
 Predictive saliency stands on decades of vision research. The deep backend builds on [UNISAL](https://github.com/rdroste/unisal) (Droste et al.). The fast backend implements [Hou & Zhang's spectral-residual approach (2007)](https://www.cv-foundation.org/openaccess/content_cvpr_2007/papers/Hou_Saliency_Detection_A_Spectral_Residual_Approach_CVPR_2007_paper.pdf). Face detection uses [YuNet](https://github.com/opencv/opencv_zoo).
+
+Built with Claude Code & Codex as orchestrators and DeepSeek as the implementing agent.
