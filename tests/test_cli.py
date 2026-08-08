@@ -20,6 +20,20 @@ def _fixture(name: str) -> str:
 
 
 class TestRun:
+    def test_run_applies_jpeg_exif_orientation(self, tmp_path: Path) -> None:
+        """Rendered overlays use the same oriented dimensions as the engine."""
+        img = Image.new("RGB", (2, 3), (20, 40, 60))
+        exif = Image.Exif()
+        exif[274] = 6
+        source = tmp_path / "oriented.jpg"
+        output = tmp_path / "overlay.png"
+        img.save(source, format="JPEG", quality=100, subsampling=0, exif=exif)
+
+        result = CliRunner().invoke(main, ["run", str(source), "-o", str(output)])
+
+        assert result.exit_code == 0, result.output
+        assert Image.open(output).size == (3, 2)
+
     def test_run_produces_png(self) -> None:
         runner = CliRunner()
         with tempfile.TemporaryDirectory() as tmp:
@@ -142,6 +156,22 @@ class TestScoreCLI:
         )
         assert result.exit_code != 0
         assert "looks fractional" in result.output
+
+    def test_malformed_fractional_region_is_actionable(self) -> None:
+        """Malformed fractional numbers become a clear CLI error."""
+        runner = CliRunner()
+        result = runner.invoke(
+            main,
+            [
+                "score",
+                _fixture("landing.png"),
+                "--region",
+                "bad:0.1,nan,0.2,0.2f",
+                "--json",
+            ],
+        )
+        assert result.exit_code != 0
+        assert "must be finite" in result.output
 
     def test_out_of_bounds_error_actionable(self) -> None:
         """Fully out-of-bounds region produces actionable error."""

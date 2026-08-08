@@ -16,12 +16,8 @@ import numpy as np
 
 # ── Region parsing ───────────────────────────────────────────────────────────
 
-_REGION_RE = re.compile(
-    r"^(?P<name>[^:]+):"
-    r"(?P<x>-?[\d.]+),(?P<y>-?[\d.]+),"
-    r"(?P<w>[\d.]+),(?P<h>[\d.]+)"
-    r"(?P<frac>f)?$"
-)
+_REGION_RE = re.compile(r"^(?P<name>[^:]+):(?P<coords>.*)$")
+_PIXEL_INTEGER_RE = re.compile(r"^-?\d+$")
 
 
 class RegionParseError(ValueError):
@@ -38,44 +34,78 @@ def parse_region(region_str: str, img_w: int, img_h: int) -> tuple[str, int, int
     Fractional and pixel values mixed in one region is invalid. Boxes are clamped
     to image bounds. A fully out-of-bounds box is an error.
     """
-    m = _REGION_RE.match(region_str)
-    if not m:
+    m = _REGION_RE.match(region_str.strip())
+    if not m or not m.group("name").strip():
         raise RegionParseError(
             f"Invalid region format: {region_str!r}. "
             f"Expected name:x,y,w,h or name:0.1,0.2,0.3,0.08f"
         )
 
-    name = m.group("name")
-    x = float(m.group("x"))
-    y = float(m.group("y"))
-    w = float(m.group("w"))
-    h = float(m.group("h"))
-    is_frac = m.group("frac") is not None
+    name = m.group("name").strip()
+    coords = m.group("coords").strip()
+    is_frac = coords.endswith("f")
+    if is_frac:
+        coords = coords[:-1]
+
+    raw_values = [value.strip() for value in coords.split(",")]
+    labels = ("x", "y", "w", "h")
+    if len(raw_values) != 4 or any(not value for value in raw_values):
+        raise RegionParseError(
+            f"Invalid region format: {region_str!r}. "
+            f"Expected name:x,y,w,h or name:0.1,0.2,0.3,0.08f"
+        )
 
     if is_frac:
-        # Fractional: interpret as 0-1 ratios of image dimensions
-        x = int(round(x * img_w))
-        y = int(round(y * img_h))
-        w = int(round(w * img_w))
-        h = int(round(h * img_h))
+        fractional_values: list[float] = []
+        for raw, label in zip(raw_values, labels, strict=True):
+            try:
+                value = float(raw)
+            except ValueError as exc:
+                raise RegionParseError(
+                    f"Region {region_str!r}: {label}={raw!r} is not a valid number. "
+                    "Fractional coordinates must be finite numbers between 0 and 1."
+                ) from exc
+            if not math.isfinite(value):
+                raise RegionParseError(
+                    f"Region {region_str!r}: {label}={raw!r} must be finite. "
+                    "Use a number between 0 and 1, followed by the f suffix."
+                )
+            if not 0.0 <= value <= 1.0:
+                raise RegionParseError(
+                    f"Region {region_str!r}: {label}={raw!r} is outside the allowed 0–1 range. "
+                    "Fractional coordinates must be between 0 and 1."
+                )
+            fractional_values.append(value)
+        x, y, w, h = (
+            int(round(fractional_values[0] * img_w)),
+            int(round(fractional_values[1] * img_h)),
+            int(round(fractional_values[2] * img_w)),
+            int(round(fractional_values[3] * img_h)),
+        )
     else:
         # Pixel: reject values with decimal points (ambiguous without trailing f)
-        for val, label in [
-            (m.group("x"), "x"),
-            (m.group("y"), "y"),
-            (m.group("w"), "w"),
-            (m.group("h"), "h"),
-        ]:
-            if "." in val:
+        pixel_values: list[int] = []
+        for raw, label in zip(raw_values, labels, strict=True):
+            try:
+                numeric_value = float(raw)
+            except ValueError as exc:
                 raise RegionParseError(
-                    f"Region {region_str!r}: {label}={val!r} looks fractional. "
+                    f"Region {region_str!r}: {label}={raw!r} is not a valid number. "
+                    "Use whole-pixel values or a finite 0–1 value with the f suffix."
+                ) from exc
+            if not math.isfinite(numeric_value):
+                raise RegionParseError(
+                    f"Region {region_str!r}: {label}={raw!r} must be finite. "
+                    "Use whole-pixel values or a finite 0–1 value with the f suffix."
+                )
+            if not _PIXEL_INTEGER_RE.fullmatch(raw):
+                raise RegionParseError(
+                    f"Region {region_str!r}: {label}={raw!r} looks fractional. "
                     "Add the f suffix for fractional coords (name:0.1,0.2,0.3,0.08f) "
                     "or use whole-pixel values (name:10,20,100,50)."
                 )
-        x = int(x)
-        y = int(y)
-        w = int(w)
-        h = int(h)
+            pixel_values.append(int(raw))
+        x, y, w, h = pixel_values
 
     return _clamp_region(name, x, y, w, h, img_w, img_h)
 

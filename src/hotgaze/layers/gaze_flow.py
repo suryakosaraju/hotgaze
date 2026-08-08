@@ -44,5 +44,8 @@ class GazeFlow(SignalLayer):
         prior = 0.7 * prior + 0.3 * f_band
 
         # Normalize to [0, 1]
-        prior = (prior - prior.min()) / (prior.max() - prior.min())
+        spread = prior.max() - prior.min()
+        if spread <= 1e-10:
+            return np.zeros_like(prior, dtype=np.float32)
+        prior = (prior - prior.min()) / spread
         return prior.astype(np.float32)

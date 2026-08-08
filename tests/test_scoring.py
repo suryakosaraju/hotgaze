@@ -115,6 +115,20 @@ class TestParseRegion:
         with pytest.raises(RegionParseError, match="looks fractional"):
             parse_region("test:0.5,0.5,10,10", 800, 600)
 
+    @pytest.mark.parametrize("raw", ["nan", "inf", "-inf"])
+    def test_fractional_special_values_are_rejected(self, raw: str) -> None:
+        with pytest.raises(RegionParseError, match="finite"):
+            parse_region(f"test:0.1,{raw},0.2,0.2f", 800, 600)
+
+    @pytest.mark.parametrize("raw", ["-0.1", "1.1"])
+    def test_fractional_values_must_be_in_range(self, raw: str) -> None:
+        with pytest.raises(RegionParseError, match="0.*1"):
+            parse_region(f"test:{raw},0.1,0.2,0.2f", 800, 600)
+
+    def test_malformed_fractional_number_is_actionable(self) -> None:
+        with pytest.raises(RegionParseError, match="not a valid number"):
+            parse_region("test:0.1,not-a-number,0.2,0.2f", 800, 600)
+
 
 # ── Region scoring ───────────────────────────────────────────────────────────
 

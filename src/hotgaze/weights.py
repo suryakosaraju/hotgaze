@@ -98,10 +98,10 @@ def download_weight(
 ) -> Path:
     """Download a weight file to the cache, verifying its SHA-256.
 
-    If already cached (file exists at the final path), returns immediately
-    with zero network calls.  Otherwise, downloads to a temp file in the
-    cache directory, verifies the checksum, then atomically renames into
-    place.  A partial download is never left at the final path.
+    If already cached, verifies the pinned checksum and returns with zero
+    network calls. Otherwise, downloads to a temp file in the cache directory,
+    verifies the checksum, then atomically renames into place. A partial or
+    corrupted file is never trusted at the final path.
 
     Args:
         name: Registry key (e.g. ``"unisal"``, ``"yunet"``).
@@ -123,8 +123,9 @@ def download_weight(
 
     dest = cache_dir / spec.filename
 
-    # Cache hit — skip download
+    # Cache hit — verify before skipping the network.
     if dest.exists():
+        _verify_checksum(dest, spec.sha256, spec.name)
         return dest
 
     # Download to temp file, verify, then atomically rename

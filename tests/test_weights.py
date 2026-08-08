@@ -80,7 +80,7 @@ class TestCache:
 
 class TestDownload:
     def test_cache_hit_zero_network(self, tmp_path: Path) -> None:  # noqa: SIM117
-        """Existing cached file → zero network calls, returns immediately."""
+        """A valid cached file is verified and uses zero network calls."""
         dest = tmp_path / "test.pth"
         dest.write_bytes(_SAMPLE_DATA)
 
@@ -89,6 +89,39 @@ class TestDownload:
                 result = download_weight("test", cache_dir=tmp_path)
                 assert result == dest
                 mock_open.assert_not_called()
+
+    def test_corrupted_cache_is_rejected_without_network(self, tmp_path: Path) -> None:
+        """A corrupted cache hit is deleted and never trusted or downloaded."""
+        dest = tmp_path / "test.pth"
+        dest.write_bytes(_WRONG_DATA)
+
+        with (
+            patch("urllib.request.urlopen") as mock_open,
+            patch("hotgaze.weights.get_weight_spec", return_value=_SAMPLE_SPEC),
+            pytest.raises(ValueError, match="Checksum mismatch"),
+        ):
+            download_weight("test", cache_dir=tmp_path, progress=False)
+
+        assert not dest.exists()
+        mock_open.assert_not_called()
+
+    def test_corrupted_cache_can_be_redownloaded(self, tmp_path: Path) -> None:
+        """After a bad cache is removed, the next call downloads clean data."""
+        dest = tmp_path / "test.pth"
+        dest.write_bytes(_WRONG_DATA)
+
+        with patch("hotgaze.weights.get_weight_spec", return_value=_SAMPLE_SPEC):
+            with pytest.raises(ValueError, match="Checksum mismatch"):
+                download_weight("test", cache_dir=tmp_path, progress=False)
+
+            with patch(
+                "urllib.request.urlopen",
+                _fake_urlopen(_SAMPLE_DATA),
+            ):
+                result = download_weight("test", cache_dir=tmp_path, progress=False)
+
+        assert result == dest
+        assert dest.read_bytes() == _SAMPLE_DATA
 
     def test_downloads_and_caches(self, tmp_path: Path) -> None:
         """First download → fetches, verifies, caches."""

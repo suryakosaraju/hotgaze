@@ -11,7 +11,7 @@ from PIL import Image
 
 from . import __version__
 from .config import EngineConfig
-from .engine import run_engine
+from .engine import _load_image, run_engine
 from .scoring import (
     RegionParseError,
     compute_focal_movement,
@@ -459,10 +459,5 @@ def info() -> None:
 
 
 def _open_original(path: str) -> Image.Image:
-    """Open original image without alpha flattening (for overlay)."""
-    img = Image.open(path)
-    if img.mode == "RGBA":
-        background = Image.new("RGB", img.size, (255, 255, 255))
-        background.paste(img, mask=img.split()[3])
-        return background
-    return img.convert("RGB")
+    """Open the same orientation/alpha-normalized image used by the engine."""
+    return _load_image(path)

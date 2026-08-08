@@ -43,5 +43,8 @@ class CenterBias(SignalLayer):
         gauss = np.exp(-(((x - cx) ** 2) / (2 * sigma_x**2) + ((y - cy) ** 2) / (2 * sigma_y**2)))
 
         # Normalize to [0, 1]
-        gauss = (gauss - gauss.min()) / (gauss.max() - gauss.min())
+        spread = gauss.max() - gauss.min()
+        if spread <= 1e-10:
+            return np.zeros_like(gauss, dtype=np.float32)
+        gauss = (gauss - gauss.min()) / spread
         return gauss.astype(np.float32)
