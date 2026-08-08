@@ -150,7 +150,12 @@ def run_engine(
         blended = np.array(hm_img, dtype=np.float32) / 255.0
 
     config_dict = config.model_dump()
-    return AttentionMap(blended, (orig_w, orig_h), config_dict)
+    return AttentionMap(
+        blended,
+        (orig_w, orig_h),
+        config_dict,
+        working_size=(work_w, work_h),
+    )
 
 
 def _default_fast_layers() -> dict[str, SignalLayer]:

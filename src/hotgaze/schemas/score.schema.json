@@ -136,10 +136,18 @@
           }
         },
         "grid_deltas": {
-          "type": "array",
-          "items": {"type": "number"},
-          "minItems": 9,
-          "maxItems": 9
+          "anyOf": [
+            {
+              "type": "array",
+              "maxItems": 0
+            },
+            {
+              "type": "array",
+              "items": {"type": "number"},
+              "minItems": 9,
+              "maxItems": 9
+            }
+          ]
         },
         "focal_point_movement": {
           "type": "array",

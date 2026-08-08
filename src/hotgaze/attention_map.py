@@ -24,9 +24,11 @@ class AttentionMap:
         heatmap: np.ndarray,
         original_size: tuple[int, int],
         config: dict[str, Any] | None = None,
+        working_size: tuple[int, int] | None = None,
     ) -> None:
         self._heatmap = heatmap.astype(np.float32)
         self._original_size = original_size
+        self._working_size = working_size or (self._heatmap.shape[1], self._heatmap.shape[0])
         self._config: dict[str, Any] = config or {}
 
     @property
@@ -38,6 +40,11 @@ class AttentionMap:
     def original_size(self) -> tuple[int, int]:
         """Original image dimensions as (width, height)."""
         return self._original_size
+
+    @property
+    def working_size(self) -> tuple[int, int]:
+        """Layer-processing dimensions as (width, height)."""
+        return self._working_size
 
     @property
     def config(self) -> dict[str, Any]:

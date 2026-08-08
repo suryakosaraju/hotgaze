@@ -3,20 +3,52 @@
 from __future__ import annotations
 
 import json
+from importlib.resources import files
 
 import numpy as np
 import pytest
+from jsonschema import Draft202012Validator
 
 from hotgaze.attention_map import AttentionMap
 from hotgaze.scoring import (
     RegionParseError,
     _CanonicalEncoder,
+    compute_grid_deltas,
     find_focal_points,
     parse_region,
     score_regions,
     scores_to_json,
     validate_against_schema,
 )
+
+_SCORE_SCHEMA = json.loads(files("hotgaze.schemas").joinpath("score.schema.json").read_text())
+
+
+def _assert_draft_2020_12_valid(data: dict) -> None:
+    errors = list(Draft202012Validator(_SCORE_SCHEMA).iter_errors(data))
+    assert errors == [], [error.message for error in errors]
+
+
+def _generated_compare_data(grid_deltas: list[float]) -> dict:
+    result = scores_to_json(
+        "compare",
+        "a.png",
+        (200, 100),
+        (200, 100),
+        {"backend": "fast"},
+        [],
+        [],
+        compare={
+            "per_region_deltas": [],
+            "grid_deltas": grid_deltas,
+            "focal_point_movement": [],
+        },
+        image_b_path="b.png",
+        img_b_size=(200, 100),
+        work_b_size=(200, 100),
+    )
+    return json.loads(result)
+
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -256,6 +288,7 @@ class TestSchemaValidation:
         data = json.loads(result)
         errors = validate_against_schema(data)
         assert errors == [], f"Schema errors: {errors}"
+        _assert_draft_2020_12_valid(data)
 
     def test_missing_required_key_fails(self) -> None:
         data = {"schema": 1, "mode": "score"}
@@ -286,3 +319,28 @@ class TestSchemaValidation:
         data = json.loads(result)
         errors = validate_against_schema(data)
         assert errors == [], f"Schema errors: {errors}"
+        _assert_draft_2020_12_valid(data)
+
+    def test_region_compare_with_empty_grid_validates(self) -> None:
+        """Region-mode compare output may omit the no-region grid metrics."""
+        data = _generated_compare_data([])
+        errors = validate_against_schema(data)
+        assert errors == [], f"Schema errors: {errors}"
+        _assert_draft_2020_12_valid(data)
+
+    def test_wrong_grid_length_fails_schema_validation(self) -> None:
+        """A non-empty grid must contain exactly nine cells."""
+        errors = validate_against_schema(_generated_compare_data([0.0] * 3))
+        assert any("grid_deltas" in error for error in errors)
+
+    @pytest.mark.parametrize("grid_length", [3, 10])
+    def test_draft_2020_12_rejects_wrong_grid_length(self, grid_length: int) -> None:
+        """Standards-compliant validation rejects three and ten grid cells."""
+        data = _generated_compare_data([0.0] * grid_length)
+        errors = list(Draft202012Validator(_SCORE_SCHEMA).iter_errors(data))
+        assert errors
+
+    def test_mismatched_grid_shapes_fail_fast(self) -> None:
+        """Grid deltas never silently compare incompatible coordinate systems."""
+        with pytest.raises(ValueError, match="different heatmap shapes"):
+            compute_grid_deltas(np.zeros((9, 9)), np.zeros((6, 6)))

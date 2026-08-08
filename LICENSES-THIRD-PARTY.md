@@ -27,6 +27,7 @@ as required by the project's license-hygiene policy (see CLAUDE.md).
 | pytest | 8.0 | https://github.com/pytest-dev/pytest | MIT | Test framework |
 | pytest-cov | 5.0 | https://github.com/pytest-dev/pytest-cov | MIT | Coverage reporting |
 | mypy | 1.8 | https://github.com/python/mypy | MIT | Static type checking |
+| jsonschema | 4.20 | https://github.com/python-jsonschema/jsonschema | MIT | **DEV-ONLY** — standards-compliant Draft 2020-12 validation of generated score/compare JSON; not imported by the runtime package |
 | scikit-image | 0.22 | https://github.com/scikit-image/scikit-image | BSD-3-Clause | **TEST-ONLY** — astronaut face fixture (BSD). Must never be imported from `src/` |
 | actionlint-py | 1.7 | https://github.com/Mateusz-Grzelinski/actionlint-py | MIT | CI workflow linting |
 

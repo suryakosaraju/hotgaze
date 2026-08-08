@@ -93,6 +93,24 @@ class TestScoreCLI:
         assert len(data["regions"]) == 1
         assert "focal_points" in data
 
+    def test_large_image_json_reports_working_size(self) -> None:
+        """JSON exposes the actual downscaled layer-processing dimensions."""
+        runner = CliRunner()
+        result = runner.invoke(
+            main,
+            [
+                "score",
+                _fixture("1440x900.png"),
+                "--region",
+                "all:0,0,1440,900",
+                "--json",
+            ],
+        )
+        assert result.exit_code == 0, result.output
+        data = json.loads(result.output)
+        assert data["image"]["size"] == {"width": 1440, "height": 900}
+        assert data["image"]["working_size"] == {"width": 1024, "height": 640}
+
     def test_deterministic_json(self) -> None:
         """Two runs produce byte-identical JSON."""
         runner = CliRunner()

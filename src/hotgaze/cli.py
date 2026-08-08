@@ -169,7 +169,7 @@ def score(
                 "score",
                 image,
                 attn.original_size,
-                (attn.heatmap.shape[1], attn.heatmap.shape[0]),
+                attn.working_size,
                 config.model_dump(),
                 scored,
                 focal,
@@ -260,6 +260,15 @@ def compare(
         wa, ha = attn_a.original_size
         wb, hb = attn_b.original_size
 
+        # Pixel-space grid and focal distances are only meaningful when both
+        # images share the same coordinate system.
+        if not region and (wa, ha) != (wb, hb):
+            raise ValueError(
+                f"Images have different sizes ({wa}×{ha} vs {wb}×{hb}) and no regions were "
+                "supplied. Use a fractional --region for cross-size comparison, or resize "
+                "the images to the same dimensions."
+            )
+
         # Check size mismatch + pixel regions
         if (wa, ha) != (wb, hb):
             for rstr in region:
@@ -275,12 +284,32 @@ def compare(
                     )
 
         if region:
+            seen_names: set[str] = set()
+            for rstr in region:
+                name = parse_region(rstr, wa, ha)[0]
+                if name in seen_names:
+                    raise RegionParseError(
+                        f"Duplicate region name {name!r} in compare input. "
+                        "Use a unique name for each --region so per-region deltas are unambiguous."
+                    )
+                seen_names.add(name)
+
             # Region mode: score both images with the same regions
             scored_a, _ = score_regions(attn_a, list(region))
             scored_b, _ = score_regions(attn_b, list(region))
 
+            # Each image ranks regions independently. Match by region name so
+            # a ranking change cannot turn one region's score into another's.
+            scores_b_by_name: dict[str, list[dict[str, Any]]] = {}
+            for rb in scored_b:
+                scores_b_by_name.setdefault(rb["name"], []).append(rb)
+
             deltas: list[dict[str, Any]] = []
-            for ra, rb in zip(scored_a, scored_b, strict=False):
+            for ra in scored_a:
+                matching_scores = scores_b_by_name.get(ra["name"], [])
+                if not matching_scores:
+                    raise ValueError(f"Region {ra['name']!r} is missing from image B scores")
+                rb = matching_scores.pop(0)
                 delta = round(rb["share"] - ra["share"], 6)
                 deltas.append(
                     {
@@ -296,7 +325,7 @@ def compare(
                     "compare",
                     image_a,
                     attn_a.original_size,
-                    (attn_a.heatmap.shape[1], attn_a.heatmap.shape[0]),
+                    attn_a.working_size,
                     config.model_dump(),
                     scored_a,
                     [],
@@ -307,7 +336,7 @@ def compare(
                     },
                     image_b_path=image_b,
                     img_b_size=attn_b.original_size,
-                    work_b_size=(attn_b.heatmap.shape[1], attn_b.heatmap.shape[0]),
+                    work_b_size=attn_b.working_size,
                 )
                 click.echo(result, nl=False)
             else:
@@ -324,7 +353,7 @@ def compare(
                     "compare",
                     image_a,
                     attn_a.original_size,
-                    (attn_a.heatmap.shape[1], attn_a.heatmap.shape[0]),
+                    attn_a.working_size,
                     config.model_dump(),
                     [],
                     [],
@@ -335,7 +364,7 @@ def compare(
                     },
                     image_b_path=image_b,
                     img_b_size=attn_b.original_size,
-                    work_b_size=(attn_b.heatmap.shape[1], attn_b.heatmap.shape[0]),
+                    work_b_size=attn_b.working_size,
                 )
                 click.echo(result, nl=False)
             else:

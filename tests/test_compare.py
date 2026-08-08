@@ -5,9 +5,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import numpy as np
 from click.testing import CliRunner
 
+from hotgaze.attention_map import AttentionMap
 from hotgaze.cli import main
+from hotgaze.scoring import validate_against_schema
 
 
 def _fixture(name: str) -> str:
@@ -15,6 +18,48 @@ def _fixture(name: str) -> str:
 
 
 class TestCompareCLI:
+    def test_region_deltas_match_names_when_rankings_swap(self, tmp_path, monkeypatch) -> None:
+        """Compare pairs each region with its namesake, not its rank."""
+        image_a = tmp_path / "a.png"
+        image_b = tmp_path / "b.png"
+        image_a.touch()
+        image_b.touch()
+
+        heatmap_a = np.ones((10, 20), dtype=np.float32)
+        heatmap_a[:, :10] = 10.0
+        heatmap_b = np.ones((10, 20), dtype=np.float32)
+        heatmap_b[:, 10:] = 10.0
+        maps = {
+            str(image_a): AttentionMap(heatmap_a, (20, 10)),
+            str(image_b): AttentionMap(heatmap_b, (20, 10)),
+        }
+
+        def fake_run_engine(path: str, config=None) -> AttentionMap:
+            return maps[path]
+
+        monkeypatch.setattr("hotgaze.cli.run_engine", fake_run_engine)
+        result = CliRunner().invoke(
+            main,
+            [
+                "compare",
+                str(image_a),
+                str(image_b),
+                "--region",
+                "left:0,0,10,10",
+                "--region",
+                "right:10,0,10,10",
+                "--json",
+            ],
+        )
+
+        assert result.exit_code == 0, result.output
+        deltas = {
+            entry["name"]: entry
+            for entry in json.loads(result.output)["compare"]["per_region_deltas"]
+        }
+        assert deltas["left"]["delta"] == -0.818182
+        assert deltas["right"]["delta"] == 0.818182
+
     # ── AC 1: A==B → all deltas exactly 0 ─────────────────────────────────
 
     def test_same_image_zero_deltas(self) -> None:
@@ -38,37 +83,62 @@ class TestCompareCLI:
             assert d["delta"] == 0.0
             assert d["share_a"] == d["share_b"]
 
-    # ── AC 2: region relocated onto hotter area → positive delta ──────────
-
-    def test_relocated_region_positive_delta(self) -> None:
-        """Region in a high-attention area shows positive delta vs low-attention area."""
-        runner = CliRunner()
-        # On landing.png, top-left (0,0) has high attention (gaze_flow + center_bias).
-        # Bottom-right has low attention.
-        # We compare the SAME image but with regions in different spots —
-        # Actually, the --region applies to BOTH images. So we need two different
-        # images where the same region lands on different areas.
-        # Use landing.png (A) and landing_variant.png (B) where the CTA moved.
-        result = runner.invoke(
+    def test_duplicate_region_names_error(self) -> None:
+        """Distinct boxes must not share a name in compare mode."""
+        result = CliRunner().invoke(
             main,
             [
                 "compare",
                 _fixture("landing.png"),
                 _fixture("landing_variant.png"),
                 "--region",
-                "hero:100,100,600,150",  # hero section; in variant, CTA moved to top-right
+                "target:0,0,100,100",
+                "--region",
+                "target:700,500,100,100",
                 "--json",
             ],
         )
-        assert result.exit_code == 0
-        data = json.loads(result.output)
-        deltas = data["compare"]["per_region_deltas"]
-        assert len(deltas) == 1
-        # Delta can be positive or negative — the point is the JSON is valid
-        # and we have absolute shares for both images
-        assert "share_a" in deltas[0]
-        assert "share_b" in deltas[0]
-        assert "delta" in deltas[0]
+        assert result.exit_code != 0
+        assert "duplicate region name" in result.output.lower()
+        assert "unique name" in result.output.lower()
+
+    # ── AC 2: region relocated onto hotter area → positive delta ──────────
+
+    def test_relocated_region_positive_delta(self, tmp_path, monkeypatch) -> None:
+        """A controlled relocation onto a hotter area produces a positive delta."""
+        image_a = tmp_path / "a.png"
+        image_b = tmp_path / "b.png"
+        image_a.touch()
+        image_b.touch()
+
+        heatmap_a = np.ones((10, 20), dtype=np.float32)
+        heatmap_b = np.ones((10, 20), dtype=np.float32)
+        heatmap_b[:, :10] = 10.0
+        maps = {
+            str(image_a): AttentionMap(heatmap_a, (20, 10)),
+            str(image_b): AttentionMap(heatmap_b, (20, 10)),
+        }
+
+        def fake_run_engine(path: str, config=None) -> AttentionMap:
+            return maps[path]
+
+        monkeypatch.setattr("hotgaze.cli.run_engine", fake_run_engine)
+        result = CliRunner().invoke(
+            main,
+            [
+                "compare",
+                str(image_a),
+                str(image_b),
+                "--region",
+                "target:0,0,10,10",
+                "--json",
+            ],
+        )
+
+        assert result.exit_code == 0, result.output
+        delta = json.loads(result.output)["compare"]["per_region_deltas"][0]["delta"]
+        assert delta == 0.409091
+        assert delta > 0
 
     # ── AC 3: JSON includes absolute shares AND deltas ────────────────────
 
@@ -104,6 +174,7 @@ class TestCompareCLI:
         # Region mode: grid_deltas and focal_point_movement are empty
         assert data["compare"]["grid_deltas"] == []
         assert data["compare"]["focal_point_movement"] == []
+        assert validate_against_schema(data) == []
 
     def test_grid_deltas_non_empty_in_no_region_mode(self) -> None:
         """In no-region mode, grid_deltas has 9 values and focal_movement is populated."""
@@ -116,6 +187,17 @@ class TestCompareCLI:
         data = json.loads(result.output)
         assert len(data["compare"]["grid_deltas"]) == 9
         assert len(data["compare"]["focal_point_movement"]) > 0
+
+    def test_size_mismatch_without_regions_errors(self) -> None:
+        """No-region movement metrics require a shared pixel coordinate system."""
+        runner = CliRunner()
+        result = runner.invoke(
+            main,
+            ["compare", _fixture("landing.png"), _fixture("1440x900.png"), "--json"],
+        )
+        assert result.exit_code != 0
+        assert "different sizes" in result.output.lower()
+        assert "fractional --region" in result.output.lower()
 
     # ── AC 4: no-region mode → 3×3 grid + focal movement ─────────────────
 

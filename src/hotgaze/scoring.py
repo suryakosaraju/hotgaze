@@ -222,6 +222,11 @@ def compute_grid_deltas(hm_a: np.ndarray, hm_b: np.ndarray) -> list[float]:
     in row-major order (top-left to bottom-right). Positive = B has more
     attention in that cell.
     """
+    if hm_a.shape != hm_b.shape:
+        raise ValueError(
+            f"Cannot compare grid deltas for different heatmap shapes: {hm_a.shape} vs {hm_b.shape}"
+        )
+
     h, w = hm_a.shape
     dw = w // 3
     dh = h // 3
@@ -405,6 +410,13 @@ def validate_against_schema(data: dict[str, Any]) -> list[str]:
 def _validate_value(value: Any, spec: dict[str, Any], path: str) -> list[str]:
     """Recursively validate a value against a schema spec."""
     errors: list[str] = []
+
+    if "anyOf" in spec:
+        branch_errors = [_validate_value(value, branch, path) for branch in spec["anyOf"]]
+        if not any(not branch for branch in branch_errors):
+            errors.append(f"{path}: does not match any allowed schema")
+        return errors
+
     typ = spec.get("type")
 
     if typ == "object":
@@ -422,6 +434,10 @@ def _validate_value(value: Any, spec: dict[str, Any], path: str) -> list[str]:
         if not isinstance(value, list):
             errors.append(f"{path}: expected array, got {type(value).__name__}")
             return errors
+        if "minItems" in spec and len(value) < spec["minItems"]:
+            errors.append(f"{path}: expected at least {spec['minItems']} items")
+        if "maxItems" in spec and len(value) > spec["maxItems"]:
+            errors.append(f"{path}: expected at most {spec['maxItems']} items")
         items_spec = spec.get("items", {})
         for i, item in enumerate(value):
             errors.extend(_validate_value(item, items_spec, f"{path}[{i}]"))
@@ -435,6 +451,12 @@ def _validate_value(value: Any, spec: dict[str, Any], path: str) -> list[str]:
     elif typ == "number":
         if not isinstance(value, (int, float)) or isinstance(value, bool):
             errors.append(f"{path}: expected number, got {type(value).__name__}")
+
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        if "minimum" in spec and value < spec["minimum"]:
+            errors.append(f"{path}: expected at least {spec['minimum']}")
+        if "maximum" in spec and value > spec["maximum"]:
+            errors.append(f"{path}: expected at most {spec['maximum']}")
 
     if "enum" in spec and value not in spec["enum"]:
         errors.append(f"{path}: {value!r} not in {spec['enum']}")

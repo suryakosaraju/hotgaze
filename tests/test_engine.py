@@ -93,6 +93,7 @@ class TestEngine:
             result = run_engine(path, config=config)
             # Output should match original size
             assert result.original_size == (3000, 2000)
+            assert result.working_size == (1024, 683)
             assert result.heatmap.shape == (2000, 3000)
         finally:
             Path(path).unlink()
@@ -146,6 +147,7 @@ class TestAttentionMap:
         hm = np.ones((100, 200), dtype=np.float32) * 0.5
         am = AttentionMap(hm, (200, 100), {"backend": "fast"})
         assert am.original_size == (200, 100)
+        assert am.working_size == (200, 100)
         assert am.config == {"backend": "fast"}
         np.testing.assert_array_equal(am.heatmap, hm)
 
