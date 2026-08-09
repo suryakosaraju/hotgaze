@@ -33,6 +33,25 @@ def _fake_unisal_model():
 
 
 class TestSaliencyDeepFake:
+    def test_non_stride_input_is_padded_and_cropped(self) -> None:
+        _require_torch()
+        import torch
+
+        from hotgaze.layers.saliency_deep import SaliencyDeep
+
+        class ShapeCheckingFakeUNISAL(torch.nn.Module):
+            def forward(self, x, target_size=None, source="SALICON", static=True):  # noqa: ARG002
+                _, _, _, h, w = x.shape
+                assert h % 32 == 0
+                assert w % 32 == 0
+                return torch.zeros((1, 1, 1, h, w), dtype=x.dtype)
+
+        img = np.zeros((600, 800, 3), dtype=np.uint8)
+        result = SaliencyDeep(ShapeCheckingFakeUNISAL()).compute(img)
+
+        assert result.shape == (600, 800)
+        assert result.dtype == np.float32
+
     def test_output_shape_matches_input(self) -> None:
         _require_torch()
         from hotgaze.layers.saliency_deep import SaliencyDeep
@@ -131,6 +150,70 @@ class TestDeepCLIErrors:
 
 @pytest.mark.deep
 class TestSaliencyDeepReal:
+    def test_real_weights_differ_from_fast_and_repeat_scores(self) -> None:
+        """The real deep backend changes the map and repeats canonical scores."""
+        pytest.importorskip("torch")
+        try:
+            from hotgaze.layers.saliency_deep import load_unisal
+
+            load_unisal()
+        except FileNotFoundError:
+            pytest.skip("UNISAL weights not yet published")
+
+        from hotgaze.config import EngineConfig
+        from hotgaze.engine import run_engine
+        from hotgaze.scoring import scores_to_json
+
+        path = "tests/fixtures/landing.png"
+        fast = run_engine(path, config=EngineConfig.fast_default())
+        deep_a = run_engine(path, config=EngineConfig.deep_default())
+        deep_b = run_engine(path, config=EngineConfig.deep_default())
+
+        mean_difference = float(np.abs(fast.heatmap - deep_a.heatmap).mean())
+        assert mean_difference > 1e-3
+
+        regions_a, focal_a = deep_a.score(["headline:130,110,330,130", "cta:250,200,200,35"])
+        regions_b, focal_b = deep_b.score(["headline:130,110,330,130", "cta:250,200,200,35"])
+        json_a = scores_to_json(
+            "score",
+            path,
+            deep_a.original_size,
+            deep_a.working_size,
+            deep_a.config,
+            regions_a,
+            focal_a,
+        )
+        json_b = scores_to_json(
+            "score",
+            path,
+            deep_b.original_size,
+            deep_b.working_size,
+            deep_b.config,
+            regions_b,
+            focal_b,
+        )
+        assert json_a == json_b
+
+    def test_real_weights_handle_non_stride_landing_fixture(self) -> None:
+        """UNISAL handles the 800×600 fixture without a skip or shape error."""
+        pytest.importorskip("torch")
+        try:
+            from hotgaze.layers.saliency_deep import SaliencyDeep, load_unisal
+
+            model = load_unisal()
+        except FileNotFoundError:
+            pytest.skip("UNISAL weights not yet published")
+
+        from PIL import Image
+
+        image = np.asarray(Image.open("tests/fixtures/landing.png").convert("RGB"))
+        result = SaliencyDeep(model).compute(image)
+
+        assert result.shape == image.shape[:2]
+        assert result.dtype == np.float32
+        assert np.isfinite(result).all()
+        assert 0.0 <= result.min() <= result.max() <= 1.0
+
     def test_real_weights_astronaut_face(self) -> None:
         """Load real UNISAL, run on scikit-image astronaut, verify face detected.
 

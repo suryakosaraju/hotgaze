@@ -16,6 +16,7 @@ from .base import SignalLayer
 # ImageNet normalization — from unisal/unisal/data.py lines 64-65
 _IMAGENET_MEAN = (0.485, 0.456, 0.406)
 _IMAGENET_STD = (0.229, 0.224, 0.225)
+_UNISAL_STRIDE = 32
 
 
 class SaliencyDeep(SignalLayer):
@@ -35,6 +36,8 @@ class SaliencyDeep(SignalLayer):
 
     def compute(self, img: np.ndarray) -> np.ndarray:
         h, w = img.shape[:2]
+        model_h = ((h + _UNISAL_STRIDE - 1) // _UNISAL_STRIDE) * _UNISAL_STRIDE
+        model_w = ((w + _UNISAL_STRIDE - 1) // _UNISAL_STRIDE) * _UNISAL_STRIDE
 
         # Convert to tensor, ImageNet-normalize
         t = torch.from_numpy(img.astype(np.float32)).permute(2, 0, 1)  # (3, H, W)
@@ -42,13 +45,21 @@ class SaliencyDeep(SignalLayer):
         for c in range(3):
             t[c] = (t[c] - _IMAGENET_MEAN[c]) / _IMAGENET_STD[c]
 
+        # UNISAL's skip connections require spatial dimensions divisible by
+        # 32. Replicate edge pixels instead of warping the input, then crop
+        # the prediction back to the working-image dimensions below.
+        pad_h = model_h - h
+        pad_w = model_w - w
+        if pad_h or pad_w:
+            t = torch.nn.functional.pad(t, (0, pad_w, 0, pad_h), mode="replicate")
+
         # UNISAL expects 5-D: [batch=1, time=1, channels=3, H, W]
         t = t.unsqueeze(0).unsqueeze(0)  # (1, 1, 3, H, W)
 
         with torch.no_grad():
             output = self._model(t, source="SALICON", static=True)
             # output: (1, 1, 1, H, W) — log-probability map
-            prob = torch.exp(output[0, 0, 0])  # (H, W) probability map
+            prob = torch.exp(output[0, 0, 0])[:h, :w]  # (H, W) probability map
 
         result = prob.cpu().numpy().astype(np.float32)
 
