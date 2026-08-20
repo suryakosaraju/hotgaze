@@ -1,0 +1,105 @@
+name: HotGaze Attention Regression
+description: Compare a candidate screenshot with a baseline and publish deterministic attention artifacts.
+author: HotGaze
+
+branding:
+  icon: eye
+  color: blue
+
+inputs:
+  baseline:
+    description: Path to the baseline PNG, JPEG, or WebP screenshot.
+    required: true
+  candidate:
+    description: Path to the candidate PNG, JPEG, or WebP screenshot.
+    required: true
+  regions:
+    description: Optional newline-delimited HotGaze regions (name:x,y,w,h or fractional form).
+    required: false
+    default: ""
+  backend:
+    description: Saliency backend. Use exactly fast for offline CI or deep for explicit UNISAL inference.
+    required: false
+    default: fast
+  failure-threshold:
+    description: Optional maximum absolute attention-share loss allowed for any configured region.
+    required: false
+    default: ""
+  output-directory:
+    description: Directory for JSON and overlay artifacts.
+    required: false
+    default: hotgaze-results
+  artifact-name:
+    description: Name of the uploaded workflow artifact.
+    required: false
+    default: hotgaze-results
+  alpha:
+    description: Overlay opacity from 0 to 1.
+    required: false
+    default: "0.6"
+  colormap:
+    description: Overlay colormap (jet or turbo).
+    required: false
+    default: jet
+
+outputs:
+  result:
+    description: passed or failed when execution produced comparison artifacts.
+    value: ${{ steps.compare.outputs.result }}
+  output-directory:
+    description: Absolute path to the generated artifact directory.
+    value: ${{ steps.compare.outputs['output-directory'] }}
+  baseline-score:
+    description: Absolute path to canonical baseline score JSON.
+    value: ${{ steps.compare.outputs['baseline-score'] }}
+  candidate-score:
+    description: Absolute path to canonical candidate score JSON.
+    value: ${{ steps.compare.outputs['candidate-score'] }}
+  compare-json:
+    description: Absolute path to canonical compare JSON.
+    value: ${{ steps.compare.outputs['compare-json'] }}
+  baseline-overlay:
+    description: Absolute path to the baseline overlay image.
+    value: ${{ steps.compare.outputs['baseline-overlay'] }}
+  candidate-overlay:
+    description: Absolute path to the candidate overlay image.
+    value: ${{ steps.compare.outputs['candidate-overlay'] }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install HotGaze core
+      shell: bash
+      run: python3 -m pip install "$GITHUB_ACTION_PATH"
+
+    - name: Install explicitly selected deep backend
+      if: ${{ inputs.backend == 'deep' }}
+      shell: bash
+      run: python3 -m pip install "$GITHUB_ACTION_PATH[deep]"
+
+    - name: Compare screenshot attention
+      id: compare
+      shell: bash
+      env:
+        HOTGAZE_ACTION_BASELINE: ${{ inputs.baseline }}
+        HOTGAZE_ACTION_CANDIDATE: ${{ inputs.candidate }}
+        HOTGAZE_ACTION_REGIONS: ${{ inputs.regions }}
+        HOTGAZE_ACTION_BACKEND: ${{ inputs.backend }}
+        HOTGAZE_ACTION_FAILURE_THRESHOLD: ${{ inputs['failure-threshold'] }}
+        HOTGAZE_ACTION_OUTPUT_DIRECTORY: ${{ inputs['output-directory'] }}
+        HOTGAZE_ACTION_ALPHA: ${{ inputs.alpha }}
+        HOTGAZE_ACTION_COLORMAP: ${{ inputs.colormap }}
+      run: python3 -m hotgaze.action
+
+    - name: Upload HotGaze artifacts
+      if: ${{ always() && steps.compare.outputs['output-directory'] != '' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs['artifact-name'] }}
+        path: |
+          ${{ steps.compare.outputs['baseline-score'] }}
+          ${{ steps.compare.outputs['candidate-score'] }}
+          ${{ steps.compare.outputs['compare-json'] }}
+          ${{ steps.compare.outputs['baseline-overlay'] }}
+          ${{ steps.compare.outputs['candidate-overlay'] }}
+        if-no-files-found: warn

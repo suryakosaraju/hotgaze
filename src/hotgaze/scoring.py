@@ -311,6 +311,81 @@ def compute_focal_movement(
     return movement
 
 
+def compare_attention_maps(
+    attention_map_a: Any,
+    attention_map_b: Any,
+    regions: list[str],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
+    """Compare two attention maps using the public compare-mode contract.
+
+    Returns baseline scores, candidate scores, and the compare payload used by
+    canonical schema-v1 JSON. Region comparisons are matched by unique name;
+    without regions, both images must share a pixel coordinate system.
+    """
+    size_a = attention_map_a.original_size
+    size_b = attention_map_b.original_size
+
+    if not regions and size_a != size_b:
+        wa, ha = size_a
+        wb, hb = size_b
+        raise ValueError(
+            f"Images have different sizes ({wa}×{ha} vs {wb}×{hb}) and no regions were "
+            "supplied. Use a fractional --region for cross-size comparison, or resize "
+            "the images to the same dimensions."
+        )
+
+    if size_a != size_b:
+        wa, ha = size_a
+        wb, hb = size_b
+        for region in regions:
+            if not region.rstrip().endswith("f"):
+                raise RegionParseError(
+                    f"Images have different sizes ({wa}×{ha} vs {wb}×{hb}). "
+                    f"Region {region!r} uses pixel coordinates. "
+                    "Use fractional coords with trailing f "
+                    "(e.g. name:0.1,0.2,0.3,0.08f) for cross-size comparisons."
+                )
+
+    if regions:
+        seen_names: set[str] = set()
+        for region in regions:
+            name = parse_region(region, *size_a)[0]
+            if name in seen_names:
+                raise RegionParseError(
+                    f"Duplicate region name {name!r} in compare input. "
+                    "Use a unique name for each --region so per-region deltas are unambiguous."
+                )
+            seen_names.add(name)
+
+        scored_a, _ = score_regions(attention_map_a, regions)
+        scored_b, _ = score_regions(attention_map_b, regions)
+        scores_b_by_name = {entry["name"]: entry for entry in scored_b}
+        deltas = [
+            {
+                "name": entry_a["name"],
+                "share_a": entry_a["share"],
+                "share_b": scores_b_by_name[entry_a["name"]]["share"],
+                "delta": round(scores_b_by_name[entry_a["name"]]["share"] - entry_a["share"], 6),
+            }
+            for entry_a in scored_a
+        ]
+        compare: dict[str, Any] = {
+            "per_region_deltas": deltas,
+            "grid_deltas": [],
+            "focal_point_movement": [],
+        }
+        return scored_a, scored_b, compare
+
+    _, focal_a = score_regions(attention_map_a, [])
+    _, focal_b = score_regions(attention_map_b, [])
+    compare = {
+        "per_region_deltas": [],
+        "grid_deltas": compute_grid_deltas(attention_map_a.heatmap, attention_map_b.heatmap),
+        "focal_point_movement": compute_focal_movement(focal_a, focal_b),
+    }
+    return [], [], compare
+
+
 # ── Canonical JSON ───────────────────────────────────────────────────────────
 
 

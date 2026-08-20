@@ -87,6 +87,42 @@ $ hotgaze compare landing_a.png landing_b.png --region cta:250,200,200,35 --json
 
 Variant B lost 37% of the CTA's attention share. That's an actionable number, not "the heatmap looks about the same."
 
+## GitHub Action
+
+Compare a CI-generated screenshot with a baseline using the offline `fast`
+backend. The Action uploads canonical schema-v1 score/compare JSON and both
+overlays, then adds a region table to the job summary.
+
+```yaml
+permissions:
+  contents: read
+
+steps:
+  - uses: actions/checkout@v4
+  - uses: actions/setup-python@v5
+    with:
+      python-version: "3.12"
+  - uses: suryakosaraju/hotgaze@main
+    with:
+      baseline: tests/screenshots/baseline.png
+      candidate: tests/screenshots/candidate.png
+      regions: |
+        headline:0.10,0.08,0.60,0.18f
+        cta:0.35,0.55,0.30,0.12f
+      failure-threshold: "0.02"
+```
+
+`failure-threshold` is an absolute attention-share loss: `0.02` allows a region
+to lose up to two percentage points. The step fails only when a configured
+region loses more than that threshold or execution is invalid. Without a
+threshold, the Action reports differences without failing.
+
+No PR comments, write permissions, or GitHub token input are required. The
+default `fast` backend downloads no model weights. Selecting `backend: deep`
+explicitly installs PyTorch and permits HotGaze's one-time checksummed UNISAL
+weight download. See the complete consumer workflow in
+[`.github/examples/hotgaze-consumer.yml`](.github/examples/hotgaze-consumer.yml).
+
 ## What's in the box
 
 - **CLI**: `hotgaze run`, `hotgaze score`, `hotgaze compare`, `hotgaze info`.

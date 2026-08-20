@@ -14,9 +14,7 @@ from .config import EngineConfig
 from .engine import _load_image, run_engine
 from .scoring import (
     RegionParseError,
-    compute_focal_movement,
-    compute_grid_deltas,
-    parse_region,
+    compare_attention_maps,
     score_regions,
     scores_to_json,
 )
@@ -256,69 +254,10 @@ def compare(
         config = _get_config(backend, extra)
         attn_a = run_engine(image_a, config=config)
         attn_b = run_engine(image_b, config=config)
-
-        wa, ha = attn_a.original_size
-        wb, hb = attn_b.original_size
-
-        # Pixel-space grid and focal distances are only meaningful when both
-        # images share the same coordinate system.
-        if not region and (wa, ha) != (wb, hb):
-            raise ValueError(
-                f"Images have different sizes ({wa}×{ha} vs {wb}×{hb}) and no regions were "
-                "supplied. Use a fractional --region for cross-size comparison, or resize "
-                "the images to the same dimensions."
-            )
-
-        # Check size mismatch + pixel regions
-        if (wa, ha) != (wb, hb):
-            for rstr in region:
-                _, x, y, w, h = parse_region(rstr, wa, ha)
-                # Re-parse to check if it had trailing f — parse_region converts both,
-                # so check the raw string for 'f' suffix
-                if not rstr.rstrip().endswith("f"):
-                    raise RegionParseError(
-                        f"Images have different sizes ({wa}×{ha} vs {wb}×{hb}). "
-                        f"Region {rstr!r} uses pixel coordinates. "
-                        "Use fractional coords with trailing f "
-                        "(e.g. name:0.1,0.2,0.3,0.08f) for cross-size comparisons."
-                    )
+        scored_a, _, comparison = compare_attention_maps(attn_a, attn_b, list(region))
 
         if region:
-            seen_names: set[str] = set()
-            for rstr in region:
-                name = parse_region(rstr, wa, ha)[0]
-                if name in seen_names:
-                    raise RegionParseError(
-                        f"Duplicate region name {name!r} in compare input. "
-                        "Use a unique name for each --region so per-region deltas are unambiguous."
-                    )
-                seen_names.add(name)
-
-            # Region mode: score both images with the same regions
-            scored_a, _ = score_regions(attn_a, list(region))
-            scored_b, _ = score_regions(attn_b, list(region))
-
-            # Each image ranks regions independently. Match by region name so
-            # a ranking change cannot turn one region's score into another's.
-            scores_b_by_name: dict[str, list[dict[str, Any]]] = {}
-            for rb in scored_b:
-                scores_b_by_name.setdefault(rb["name"], []).append(rb)
-
-            deltas: list[dict[str, Any]] = []
-            for ra in scored_a:
-                matching_scores = scores_b_by_name.get(ra["name"], [])
-                if not matching_scores:
-                    raise ValueError(f"Region {ra['name']!r} is missing from image B scores")
-                rb = matching_scores.pop(0)
-                delta = round(rb["share"] - ra["share"], 6)
-                deltas.append(
-                    {
-                        "name": ra["name"],
-                        "share_a": ra["share"],
-                        "share_b": rb["share"],
-                        "delta": delta,
-                    }
-                )
+            deltas = comparison["per_region_deltas"]
 
             if json_output:
                 result = scores_to_json(
@@ -329,11 +268,7 @@ def compare(
                     config.model_dump(),
                     scored_a,
                     [],
-                    compare={
-                        "per_region_deltas": deltas,
-                        "grid_deltas": [],
-                        "focal_point_movement": [],
-                    },
+                    compare=comparison,
                     image_b_path=image_b,
                     img_b_size=attn_b.original_size,
                     work_b_size=attn_b.working_size,
@@ -342,11 +277,8 @@ def compare(
             else:
                 _print_compare_table(deltas)
         else:
-            # No-region mode: focal points + 3×3 grid
-            _, focal_a = score_regions(attn_a, [])
-            _, focal_b = score_regions(attn_b, [])
-            grid_deltas = compute_grid_deltas(attn_a.heatmap, attn_b.heatmap)
-            focal_movement = compute_focal_movement(focal_a, focal_b)
+            grid_deltas = comparison["grid_deltas"]
+            focal_movement = comparison["focal_point_movement"]
 
             if json_output:
                 result = scores_to_json(
@@ -357,11 +289,7 @@ def compare(
                     config.model_dump(),
                     [],
                     [],
-                    compare={
-                        "per_region_deltas": [],
-                        "grid_deltas": grid_deltas,
-                        "focal_point_movement": focal_movement,
-                    },
+                    compare=comparison,
                     image_b_path=image_b,
                     img_b_size=attn_b.original_size,
                     work_b_size=attn_b.working_size,
