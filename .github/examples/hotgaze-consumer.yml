@@ -1,0 +1,27 @@
+name: HotGaze attention regression
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compare-screenshots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compare candidate screenshot with baseline
+        uses: suryakosaraju/hotgaze@main
+        with:
+          baseline: tests/screenshots/baseline.png
+          candidate: tests/screenshots/candidate.png
+          regions: |
+            headline:0.10,0.08,0.60,0.18f
+            cta:0.35,0.55,0.30,0.12f
+          failure-threshold: "0.02"

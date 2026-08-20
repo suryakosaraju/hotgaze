@@ -1,0 +1,108 @@
+name: Local HotGaze Action integration
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  composite-action:
+    name: Dogfood the local composite Action
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up supported Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install fixture generator dependency
+        run: python3 -m pip install pillow
+
+      - name: Generate landing fixtures
+        run: python3 scripts/generate_fixtures.py
+
+      - name: Compare landing screenshots
+        id: pass
+        uses: ./
+        with:
+          baseline: tests/fixtures/landing.png
+          candidate: tests/fixtures/landing_variant.png
+          regions: |
+            headline:0.16,0.18,0.42,0.22f
+            cta:0.31,0.33,0.25,0.08f
+          backend: fast
+          output-directory: .github-action results/pass run
+          artifact-name: hotgaze-action-pass
+
+      - name: Verify passing comparison outputs
+        env:
+          RESULT: ${{ steps.pass.outputs['result'] }}
+          OUTPUT_DIRECTORY: ${{ steps.pass.outputs['output-directory'] }}
+          BASELINE_SCORE: ${{ steps.pass.outputs['baseline-score'] }}
+          CANDIDATE_SCORE: ${{ steps.pass.outputs['candidate-score'] }}
+          COMPARE_JSON: ${{ steps.pass.outputs['compare-json'] }}
+          BASELINE_OVERLAY: ${{ steps.pass.outputs['baseline-overlay'] }}
+          CANDIDATE_OVERLAY: ${{ steps.pass.outputs['candidate-overlay'] }}
+        run: |
+          test -n "$RESULT"
+          test -n "$OUTPUT_DIRECTORY"
+          test -n "$BASELINE_SCORE"
+          test -n "$CANDIDATE_SCORE"
+          test -n "$COMPARE_JSON"
+          test -n "$BASELINE_OVERLAY"
+          test -n "$CANDIDATE_OVERLAY"
+          test "$RESULT" = passed
+          test -f "$OUTPUT_DIRECTORY/baseline-score.json"
+          test -f "$OUTPUT_DIRECTORY/candidate-score.json"
+          test -f "$OUTPUT_DIRECTORY/compare.json"
+          test -f "$OUTPUT_DIRECTORY/baseline-overlay.png"
+          test -f "$OUTPUT_DIRECTORY/candidate-overlay.png"
+
+      - name: Exercise threshold failure and retain artifacts
+        id: threshold
+        continue-on-error: true
+        uses: ./
+        with:
+          baseline: tests/fixtures/landing.png
+          candidate: tests/fixtures/landing_variant.png
+          regions: |
+            headline:0.16,0.18,0.42,0.22f
+            cta:0.31,0.33,0.25,0.08f
+          backend: fast
+          failure-threshold: "0.000001"
+          output-directory: .github-action results/threshold run
+          artifact-name: hotgaze-action-threshold-failure
+
+      - name: Verify threshold failure outputs
+        if: ${{ always() }}
+        env:
+          OUTCOME: ${{ steps.threshold.outcome }}
+          RESULT: ${{ steps.threshold.outputs['result'] }}
+          OUTPUT_DIRECTORY: ${{ steps.threshold.outputs['output-directory'] }}
+          BASELINE_SCORE: ${{ steps.threshold.outputs['baseline-score'] }}
+          CANDIDATE_SCORE: ${{ steps.threshold.outputs['candidate-score'] }}
+          COMPARE_JSON: ${{ steps.threshold.outputs['compare-json'] }}
+          BASELINE_OVERLAY: ${{ steps.threshold.outputs['baseline-overlay'] }}
+          CANDIDATE_OVERLAY: ${{ steps.threshold.outputs['candidate-overlay'] }}
+        run: |
+          test "$OUTCOME" = failure
+          test -n "$RESULT"
+          test -n "$OUTPUT_DIRECTORY"
+          test -n "$BASELINE_SCORE"
+          test -n "$CANDIDATE_SCORE"
+          test -n "$COMPARE_JSON"
+          test -n "$BASELINE_OVERLAY"
+          test -n "$CANDIDATE_OVERLAY"
+          test "$RESULT" = failed
+          test -f "$OUTPUT_DIRECTORY/baseline-score.json"
+          test -f "$OUTPUT_DIRECTORY/candidate-score.json"
+          test -f "$OUTPUT_DIRECTORY/compare.json"
+          test -f "$OUTPUT_DIRECTORY/baseline-overlay.png"
+          test -f "$OUTPUT_DIRECTORY/candidate-overlay.png"
