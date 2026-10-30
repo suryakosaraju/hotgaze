@@ -123,6 +123,13 @@ explicitly installs PyTorch and permits HotGaze's one-time checksummed UNISAL
 weight download. See the complete consumer workflow in
 [`.github/examples/hotgaze-consumer.yml`](.github/examples/hotgaze-consumer.yml).
 
+## Web demo
+
+[`web/`](web/) is a small browser UI and JSON API over the same engine: upload a
+screenshot for its overlay, region scores and focal points, or compare two
+variants. The [`render.yaml`](render.yaml) Blueprint deploys it to Render's free
+plan — see [`web/README.md`](web/README.md).
+
 ## What's in the box
 
 - **CLI**: `hotgaze run`, `hotgaze score`, `hotgaze compare`, `hotgaze info`.

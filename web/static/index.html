@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HotGaze — attention heatmaps for UI screenshots</title>
+<meta name="description" content="Predict where users' eyes land on a UI screenshot, score regions and compare A/B variants.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23e8590c'/%3E%3Ccircle cx='16' cy='16' r='8' fill='%23ffd43b'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%23fff'/%3E%3C/svg%3E">
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f5f6fa;
+    --surface: #ffffff;
+    --surface-2: #eef0f6;
+    --border: #dde1eb;
+    --text: #171b2c;
+    --muted: #5b6277;
+    --accent: #d9480f;
+    --accent-hover: #b93a0a;
+    --accent-ink: #ffffff;
+    --focus: #2563eb;
+    --gain: #15803d;
+    --loss: #c2261c;
+    --gain-rgb: 21, 128, 61;
+    --loss-rgb: 194, 38, 28;
+    --radius: 12px;
+    --shadow: 0 1px 2px rgba(16, 24, 40, .05), 0 2px 8px rgba(16, 24, 40, .06);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+      "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e1016;
+      --surface: #161a23;
+      --surface-2: #1e2331;
+      --border: #2b3142;
+      --text: #e7e9f1;
+      --muted: #9aa1b6;
+      --accent: #ff7a3d;
+      --accent-hover: #ff9663;
+      --accent-ink: #1d0b02;
+      --focus: #7aa2ff;
+      --gain: #4ade80;
+      --loss: #f87171;
+      --gain-rgb: 74, 222, 128;
+      --loss-rgb: 248, 113, 113;
+      --shadow: none;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); }
+  a { color: inherit; }
+  h1, h2, h3 { line-height: 1.25; margin: 0; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
+  header.top { padding: 28px 0 20px; }
+  .top .wrap { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between; }
+  .brand { display: flex; gap: 14px; align-items: center; }
+  .logo {
+    width: 40px; height: 40px; border-radius: 50%; flex: none;
+    background: radial-gradient(circle at 50% 50%, #fff 0 14%, #ffd43b 15% 38%, #f76707 39% 62%, #c92a2a 63%);
+  }
+  .brand h1 { font-size: 22px; letter-spacing: -.01em; }
+  .brand p { margin: 2px 0 0; color: var(--muted); }
+  nav { display: flex; gap: 16px; align-items: center; font-size: 14px; }
+  nav a { color: var(--muted); text-decoration: none; }
+  nav a:hover { color: var(--text); text-decoration: underline; }
+  .pill { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--muted); }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+  .panel { padding: 20px; }
+
+  .tabs { display: inline-flex; gap: 4px; padding: 4px; background: var(--surface-2); border-radius: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+  .tabs button {
+    border: 0; background: transparent; padding: 7px 14px; border-radius: 7px; cursor: pointer; color: var(--muted); font-weight: 500;
+  }
+  .tabs button[aria-selected="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+
+  .grid-form { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 20px; }
+  @media (max-width: 860px) { .grid-form { grid-template-columns: minmax(0, 1fr); } }
+
+  .drops { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); align-content: start; }
+  .drop {
+    position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+    min-height: 196px; padding: 16px; border: 1.5px dashed var(--border); border-radius: 10px; background: var(--surface-2);
+    cursor: pointer; transition: border-color .15s, background .15s;
+  }
+  .drop:hover, .drop.over { border-color: var(--accent); }
+  .drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .drop input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+  .drop .thumb { max-width: 100%; max-height: 120px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 8px; background: #fff; }
+  .drop-title { font-weight: 600; }
+  .drop-hint, .drop-file { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+
+  .options { display: grid; gap: 14px; grid-template-columns: 1fr 1fr; align-content: start; }
+  .field { display: flex; flex-direction: column; gap: 6px; font-weight: 500; font-size: 14px; }
+  .field.wide { grid-column: 1 / -1; }
+  .field small { display: block; font-weight: 400; color: var(--muted); font-size: 12.5px; }
+  .field output { font-weight: 400; color: var(--muted); }
+  select, textarea {
+    width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface);
+  }
+  textarea { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; resize: vertical; min-height: 84px; }
+  input[type="range"] { width: 100%; accent-color: var(--accent); }
+  .check { display: flex; gap: 8px; align-items: center; font-size: 14px; grid-column: 1 / -1; }
+  .check input { accent-color: var(--accent); width: 16px; height: 16px; }
+  .check small { color: var(--muted); }
+
+  .actions { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: center; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .btn {
+    border: 1px solid var(--border); background: var(--surface); padding: 9px 16px; border-radius: 9px; cursor: pointer; font-weight: 600;
+  }
+  .btn:hover { background: var(--surface-2); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .btn:disabled { opacity: .55; cursor: progress; }
+  .status { font-size: 14px; color: var(--muted); flex: 1 1 260px; }
+  .status.error { color: var(--loss); }
+  .spinner {
+    display: inline-block; width: 14px; height: 14px; margin-right: 6px; vertical-align: -2px; border-radius: 50%;
+    border: 2px solid var(--border); border-top-color: var(--accent); animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #results { margin: 20px 0 8px; display: grid; gap: 20px; }
+  .result-head { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+  .result-head h2 { font-size: 17px; overflow-wrap: anywhere; }
+  .meta { color: var(--muted); font-size: 13.5px; }
+  .result-body { padding: 20px; display: grid; gap: 22px; }
+  .figs { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); }
+  figure { margin: 0; min-width: 0; }
+  figcaption { display: flex; gap: 8px; align-items: baseline; margin-bottom: 8px; flex-wrap: wrap; }
+  /* The padding keeps focal points and labels on the image edges visible. */
+  .scroller { max-height: 78vh; overflow: auto; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-2); }
+  .stage { position: relative; width: fit-content; max-width: 100%; margin: 0 auto; }
+  .stage img { display: block; max-width: 100%; height: auto; }
+  .marks { position: absolute; inset: 0; pointer-events: none; }
+  .box { position: absolute; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, .65), inset 0 0 0 1px rgba(0, 0, 0, .35); border-radius: 2px; }
+  .tag {
+    position: absolute; left: -2px; bottom: 100%; margin-bottom: 3px; white-space: nowrap; font-size: 12px; line-height: 1.3; font-weight: 600;
+    padding: 2px 6px; border-radius: 4px; background: rgba(12, 14, 22, .85); color: #fff;
+  }
+  .tag.inside { bottom: auto; top: 2px; left: 2px; margin: 0; }
+  .focal {
+    position: absolute; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; display: grid; place-items: center;
+    font-size: 11.5px; font-weight: 700; color: #111; background: #fff; box-shadow: 0 0 0 2px rgba(0, 0, 0, .7);
+  }
+  .fig-tools { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-top: 10px; font-size: 13.5px; }
+  .mini { border: 1px solid var(--border); background: var(--surface); border-radius: 7px; padding: 4px 10px; cursor: pointer; text-decoration: none; font-size: 13px; }
+  .mini:hover { background: var(--surface-2); }
+  .fig-tools label { display: flex; gap: 6px; align-items: center; color: var(--muted); }
+
+  .tables { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); align-items: start; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  caption { text-align: left; font-weight: 600; padding-bottom: 8px; }
+  caption small { font-weight: 400; color: var(--muted); }
+  th, td { padding: 7px 10px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
+  th { font-size: 12.5px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .name { font-weight: 600; white-space: normal; overflow-wrap: break-word; }
+  @media (max-width: 560px) { .col-box { display: none; } }
+  .bar { display: inline-block; height: 6px; border-radius: 3px; background: var(--accent); vertical-align: middle; margin-left: 8px; opacity: .8; }
+  .gain { color: var(--gain); font-weight: 600; }
+  .loss { color: var(--loss); font-weight: 600; }
+  .empty { color: var(--muted); font-size: 14px; }
+
+  .grid9 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; max-width: 420px; }
+  .grid9 div { padding: 14px 6px; border-radius: 6px; text-align: center; font-variant-numeric: tabular-nums; font-size: 13.5px; font-weight: 600; background: var(--surface-2); }
+
+  details.json { border: 1px solid var(--border); border-radius: 10px; }
+  details.json summary { cursor: pointer; padding: 10px 14px; font-weight: 600; }
+  .json-tools { display: flex; gap: 8px; padding: 0 14px 10px; flex-wrap: wrap; }
+  details.json pre {
+    margin: 0; padding: 12px 14px; max-height: 420px; overflow: auto; border-top: 1px solid var(--border);
+    font: 12.5px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--surface-2); border-radius: 0 0 10px 10px;
+  }
+  .hint { color: var(--muted); font-size: 13.5px; margin: 0; }
+  footer { color: var(--muted); font-size: 13px; padding: 20px 0 36px; }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"></span>
+      <div>
+        <h1>HotGaze</h1>
+        <p>Predict where eyes land on a UI screenshot — and get the numbers.</p>
+      </div>
+    </div>
+    <nav>
+      <span class="pill" id="version">…</span>
+      <a href="/docs">API docs</a>
+      <a href="https://github.com/suryakosaraju/hotgaze" rel="noopener">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="card panel">
+    <div class="tabs" role="tablist" aria-label="Mode">
+      <button type="button" role="tab" id="tab-score" aria-selected="true" data-mode="score">Analyze</button>
+      <button type="button" role="tab" id="tab-compare" aria-selected="false" data-mode="compare">Compare A / B</button>
+    </div>
+
+    <form id="form" novalidate>
+      <div class="grid-form">
+        <div class="drops">
+          <label class="drop" data-slot="a">
+            <input type="file" accept="image/png,image/jpeg,image/webp" aria-label="Screenshot">
+            <img class="thumb" alt="" hidden>
+            <span class="drop-title" data-title-score="Screenshot" data-title-compare="A · baseline">Screenshot</span>
+            <span class="drop-hint">Drop a PNG, JPEG or WebP here, or click to choose</span>
+            <span class="drop-file"></span>
+          </label>
+          <label class="drop" data-slot="b" hidden>
+            <input type="file" accept="image/png,image/jpeg,image/webp" aria-label="Screenshot B">
+            <img class="thumb" alt="" hidden>
+            <span class="drop-title">B · candidate</span>
+            <span class="drop-hint">Drop a PNG, JPEG or WebP here, or click to choose</span>
+            <span class="drop-file"></span>
+          </label>
+        </div>
+
+        <div class="options">
+          <label class="field wide">
+            <span>Regions <small id="regions-help">Optional, one per line: <code>name:x,y,w,h</code> in pixels or <code>name:0.1,0.2,0.3,0.08f</code> as fractions of the image.</small></span>
+            <textarea id="regions" rows="3" spellcheck="false" placeholder="cta:250,200,200,35&#10;headline:0.10,0.08,0.60,0.18f"></textarea>
+          </label>
+          <label class="field">
+            <span>Backend</span>
+            <select id="backend">
+              <option value="fast">fast — heuristic</option>
+              <option value="deep">deep — UNISAL</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Colormap</span>
+            <select id="colormap">
+              <option value="jet">jet</option>
+              <option value="turbo">turbo</option>
+            </select>
+          </label>
+          <label class="field wide">
+            <span>Overlay opacity <output id="alpha-out" for="alpha">0.60</output></span>
+            <input id="alpha" type="range" min="0" max="1" step="0.05" value="0.6">
+          </label>
+          <label class="check">
+            <input id="faces" type="checkbox">
+            <span>Faces layer <small>— YuNet adds attention over detected faces</small></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="submit" class="btn primary" id="run">Run analysis</button>
+        <button type="button" class="btn" id="sample" hidden>Try a sample</button>
+        <span class="status" id="status" role="status" aria-live="polite"></span>
+      </div>
+    </form>
+  </section>
+
+  <div id="results"></div>
+</main>
+
+<footer class="wrap" id="footer">
+  Images are processed in memory and deleted after each request. HotGaze is MIT-licensed — predictions come from
+  computer-vision priors, not real eye tracking.
+</footer>
+
+<script>
+(() => {
+  'use strict';
+
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const form = $('#form');
+  const statusEl = $('#status');
+  const results = $('#results');
+  const runButton = $('#run');
+  const sampleButton = $('#sample');
+  const regionsInput = $('#regions');
+  const alphaInput = $('#alpha');
+
+  const SAMPLES = {
+    score: {
+      files: ['landing.png'],
+      regions: 'headline:140,120,300,60\ncta:250,200,200,35\nfeatures:100,300,600,85',
+    },
+    compare: {
+      files: ['landing.png', 'landing_variant.png'],
+      regions: 'cta_left:250,200,200,35\ncta_top_right:550,110,130,35\nheadline:140,120,300,60',
+    },
+  };
+
+  const state = { mode: 'score', files: { a: null, b: null }, maxUploadBytes: 20 * 1024 * 1024, busy: false };
+  let resultUrls = [];
+  let ticker = null;
+
+  // ── DOM helpers (all user-provided text goes through textContent) ──────────
+  function el(tag, props = {}, ...children) {
+    const node = document.createElement(tag);
+    for (const [key, value] of Object.entries(props)) {
+      if (value === undefined || value === null || value === false) continue;
+      if (key === 'class') node.className = value;
+      else if (key === 'text') node.textContent = value;
+      else if (key === 'style') Object.assign(node.style, value);
+      else if (key.startsWith('on')) node.addEventListener(key.slice(2), value);
+      else node.setAttribute(key, value === true ? '' : value);
+    }
+    node.append(...children.flat().filter((child) => child !== null && child !== undefined && child !== false));
+    return node;
+  }
+
+  const pct = (share) => `${(share * 100).toFixed(2)}%`;
+  const signed = (value, digits, unit) => `${value > 0 ? '+' : value < 0 ? '−' : '±'}${Math.abs(value).toFixed(digits)}${unit}`;
+  const pp = (delta) => signed(delta * 100, 2, ' pp');
+  const stem = (name) => name.replace(/\.[^.]+$/, '') || 'image';
+  const trend = (delta) => (delta > 1e-6 ? 'gain' : delta < -1e-6 ? 'loss' : '');
+
+  // ── Mode tabs ──────────────────────────────────────────────────────────────
+  function setMode(mode) {
+    state.mode = mode;
+    for (const tab of document.querySelectorAll('[role="tab"]')) {
+      tab.setAttribute('aria-selected', String(tab.dataset.mode === mode));
+    }
+    $('.drop[data-slot="b"]').hidden = mode !== 'compare';
+    const titleA = $('.drop[data-slot="a"] .drop-title');
+    titleA.textContent = mode === 'compare' ? titleA.dataset.titleCompare : titleA.dataset.titleScore;
+    $('#regions-help').firstChild.textContent = mode === 'compare'
+      ? 'Optional, applied to both images, one per line: '
+      : 'Optional, one per line: ';
+    runButton.textContent = mode === 'compare' ? 'Compare' : 'Run analysis';
+  }
+  for (const tab of document.querySelectorAll('[role="tab"]')) {
+    tab.addEventListener('click', () => setMode(tab.dataset.mode));
+  }
+
+  // ── File inputs with drag & drop ───────────────────────────────────────────
+  function setFile(slot, file) {
+    const drop = $(`.drop[data-slot="${slot}"]`);
+    const thumb = $('.thumb', drop);
+    if (thumb.dataset.url) URL.revokeObjectURL(thumb.dataset.url);
+    state.files[slot] = file;
+    if (!file) {
+      thumb.hidden = true;
+      $('.drop-file', drop).textContent = '';
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    thumb.dataset.url = url;
+    thumb.src = url;
+    thumb.hidden = false;
+    $('.drop-file', drop).textContent = `${file.name} · ${(file.size / 1024).toFixed(0)} KB`;
+  }
+
+  for (const drop of document.querySelectorAll('.drop')) {
+    const slot = drop.dataset.slot;
+    const input = $('input', drop);
+    input.addEventListener('change', () => input.files[0] && setFile(slot, input.files[0]));
+    drop.addEventListener('dragover', (event) => { event.preventDefault(); drop.classList.add('over'); });
+    drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+    drop.addEventListener('drop', (event) => {
+      event.preventDefault();
+      drop.classList.remove('over');
+      const file = event.dataTransfer.files[0];
+      if (file) setFile(slot, file);
+    });
+  }
+
+  alphaInput.addEventListener('input', () => { $('#alpha-out').value = Number(alphaInput.value).toFixed(2); });
+
+  // ── Status line ────────────────────────────────────────────────────────────
+  function setStatus(text, isError = false) {
+    statusEl.classList.toggle('error', isError);
+    statusEl.replaceChildren(text);
+  }
+
+  function setBusy(busy) {
+    state.busy = busy;
+    runButton.disabled = busy;
+    sampleButton.disabled = busy;
+    clearInterval(ticker);
+    if (!busy) return;
+    const started = performance.now();
+    const tick = () => {
+      const seconds = Math.round((performance.now() - started) / 1000);
+      const note = seconds >= 6
+        ? ' — small instances (e.g. Render free, 0.1 CPU) can take 10–40 s, and the first request after idling waits for the server to wake.'
+        : '';
+      statusEl.classList.remove('error');
+      statusEl.replaceChildren(el('span', { class: 'spinner', 'aria-hidden': 'true' }), `Analyzing… ${seconds} s${note}`);
+    };
+    tick();
+    ticker = setInterval(tick, 1000);
+  }
+
+  function errorMessage(response, body) {
+    const detail = body && body.detail;
+    if (typeof detail === 'string') return detail;
+    if (Array.isArray(detail)) {
+      return detail.map((item) => `${(item.loc || []).slice(1).join('.') || 'request'}: ${item.msg}`).join('; ');
+    }
+    return `Request failed: ${response.status} ${response.statusText}`.trim();
+  }
+
+  // ── Server info ────────────────────────────────────────────────────────────
+  async function loadInfo() {
+    try {
+      const response = await fetch('/api/info');
+      const info = await response.json();
+      $('#version').textContent = `v${info.version}`;
+      state.maxUploadBytes = info.limits.max_upload_bytes;
+      const deep = $('#backend option[value="deep"]');
+      if (!info.backends.includes('deep')) {
+        deep.disabled = true;
+        deep.textContent += ' (not installed)';
+      }
+      sampleButton.hidden = info.samples.length === 0;
+      $('#footer').prepend(
+        `Limits: ${(info.limits.max_pixels / 1e6).toFixed(0)} MP and ${(info.limits.max_upload_bytes / 1048576).toFixed(0)} MB per image. `,
+      );
+    } catch (error) {
+      setStatus(`Could not reach the server: ${error.message}`, true);
+    }
+  }
+
+  // ── Submit ─────────────────────────────────────────────────────────────────
+  async function run() {
+    if (state.busy) return;
+    const mode = state.mode;
+    const slots = mode === 'compare' ? ['a', 'b'] : ['a'];
+    for (const slot of slots) {
+      const file = state.files[slot];
+      if (!file) {
+        setStatus(mode === 'compare' ? `Choose screenshot ${slot.toUpperCase()} first.` : 'Choose a screenshot first.', true);
+        return;
+      }
+      if (file.size > state.maxUploadBytes) {
+        setStatus(`${file.name} is larger than ${(state.maxUploadBytes / 1048576).toFixed(0)} MB.`, true);
+        return;
+      }
+    }
+
+    const data = new FormData();
+    if (mode === 'compare') {
+      data.append('image_a', state.files.a);
+      data.append('image_b', state.files.b);
+    } else {
+      data.append('image', state.files.a);
+    }
+    for (const line of regionsInput.value.split('\n')) {
+      if (line.trim()) data.append('region', line.trim());
+    }
+    data.append('backend', $('#backend').value);
+    data.append('colormap', $('#colormap').value);
+    data.append('alpha', alphaInput.value);
+    data.append('faces', $('#faces').checked ? 'true' : 'false');
+    const files = { a: state.files.a, b: state.files.b };
+
+    setBusy(true);
+    try {
+      const response = await fetch(`/api/${mode}`, { method: 'POST', body: data });
+      const body = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(errorMessage(response, body));
+      if (mode === 'compare') renderCompare(body, files);
+      else renderScore(body, files.a);
+      setBusy(false);
+      setStatus(`Done — analysis took ${body.elapsed_seconds.toFixed(1)} s.`);
+      results.firstElementChild.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (error) {
+      setBusy(false);
+      setStatus(error.message, true);
+    }
+  }
+
+  form.addEventListener('submit', (event) => { event.preventDefault(); run(); });
+
+  sampleButton.addEventListener('click', async () => {
+    const sample = SAMPLES[state.mode];
+    try {
+      const files = await Promise.all(sample.files.map(async (name) => {
+        const response = await fetch(`/samples/${name}`);
+        if (!response.ok) throw new Error(`Could not load sample ${name}`);
+        return new File([await response.blob()], name, { type: 'image/png' });
+      }));
+      setFile('a', files[0]);
+      if (files[1]) setFile('b', files[1]);
+      regionsInput.value = sample.regions;
+      run();
+    } catch (error) {
+      setStatus(error.message, true);
+    }
+  });
+
+  // ── Rendering ──────────────────────────────────────────────────────────────
+  function objectUrl(file) {
+    const url = URL.createObjectURL(file);
+    resultUrls.push(url);
+    return url;
+  }
+
+  function resetResults() {
+    for (const url of resultUrls) URL.revokeObjectURL(url);
+    resultUrls = [];
+  }
+
+  function figure(title, overlay, file, doc) {
+    const { width, height } = doc.image.size;
+    const original = objectUrl(file);
+    const img = el('img', { src: overlay, alt: `${title}: attention overlay`, width, height });
+    const at = (x, y) => ({ left: `${(x / width) * 100}%`, top: `${(y / height) * 100}%` });
+    const marks = el('div', { class: 'marks' },
+      doc.regions.map((region) => el('div', {
+        class: 'box',
+        style: { ...at(region.box.x, region.box.y), width: `${(region.box.w / width) * 100}%`, height: `${(region.box.h / height) * 100}%` },
+      }, el('span', {
+        // Boxes touching the top edge get their label inside, where it cannot be clipped.
+        class: region.box.y < height * 0.04 ? 'tag inside' : 'tag',
+        text: `${region.name} · ${pct(region.share)}`,
+      }))),
+      doc.focal_points.map((point) => el('div', {
+        class: 'focal', style: at(point.x, point.y), title: `Focal point #${point.rank} (value ${point.value.toFixed(3)})`, text: String(point.rank),
+      })),
+    );
+
+    const toggle = el('button', { type: 'button', class: 'mini', 'aria-pressed': 'false', text: 'Show original' });
+    toggle.addEventListener('click', () => {
+      const showingOriginal = toggle.getAttribute('aria-pressed') === 'true';
+      img.src = showingOriginal ? overlay : original;
+      toggle.setAttribute('aria-pressed', String(!showingOriginal));
+      toggle.textContent = showingOriginal ? 'Show original' : 'Show heatmap';
+    });
+    const marksToggle = el('input', { type: 'checkbox', checked: true });
+    marksToggle.addEventListener('change', () => { marks.hidden = !marksToggle.checked; });
+
+    return el('figure', {},
+      el('figcaption', {}, el('strong', { text: title }), el('span', { class: 'meta', text: `${doc.image.path} · ${width}×${height}` })),
+      el('div', { class: 'scroller' }, el('div', { class: 'stage' }, img, marks)),
+      el('div', { class: 'fig-tools' },
+        toggle,
+        el('label', {}, marksToggle, 'Regions & focal points'),
+        el('a', { class: 'mini', href: overlay, download: `${stem(doc.image.path)}_overlay.jpg`, text: 'Download overlay' }),
+      ),
+    );
+  }
+
+  function table(caption, headers, rows, note) {
+    if (!rows.length) {
+      return el('div', {}, el('p', { class: 'empty' }, el('strong', { text: caption }), ` — ${note}`));
+    }
+    return el('div', { class: 'table-wrap' },
+      el('table', {},
+        el('caption', {}, caption),
+        el('thead', {}, el('tr', {}, headers.map(([label, cls]) => el('th', { class: cls, scope: 'col', text: label })))),
+        el('tbody', {}, rows.map((cells) => el('tr', {}, cells))),
+      ),
+    );
+  }
+
+  function regionTable(doc) {
+    const top = Math.max(...doc.regions.map((region) => region.share), 1e-9);
+    return table('Regions', [['#', 'num'], ['Region'], ['Attention share', 'num'], ['Peak', 'num'], ['Box (x, y, w, h)', 'col-box']],
+      doc.regions.map((region) => [
+        el('td', { class: 'num', text: String(region.rank) }),
+        el('td', { class: 'name', text: region.name }),
+        el('td', { class: 'num' }, pct(region.share), el('span', { class: 'bar', style: { width: `${Math.max(2, (region.share / top) * 60)}px` } })),
+        el('td', { class: 'num', text: region.peak_value.toFixed(3) }),
+        el('td', { class: 'col-box', text: `${region.box.x}, ${region.box.y}, ${region.box.w}, ${region.box.h}` }),
+      ]),
+      'add regions above to get their attention share.');
+  }
+
+  function focalTable(doc, caption = 'Focal points') {
+    return table(caption, [['#', 'num'], ['x', 'num'], ['y', 'num'], ['Value', 'num']],
+      doc.focal_points.map((point) => [
+        el('td', { class: 'num', text: String(point.rank) }),
+        el('td', { class: 'num', text: String(point.x) }),
+        el('td', { class: 'num', text: String(point.y) }),
+        el('td', { class: 'num', text: point.value.toFixed(3) }),
+      ]),
+      'none found.');
+  }
+
+  function jsonBlock(title, doc, filename) {
+    const text = JSON.stringify(doc, null, 2);
+    const copy = el('button', { type: 'button', class: 'mini', text: 'Copy' });
+    copy.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(text);
+        copy.textContent = 'Copied';
+      } catch {
+        copy.textContent = 'Copy failed';
+      }
+      setTimeout(() => { copy.textContent = 'Copy'; }, 1500);
+    });
+    const href = URL.createObjectURL(new Blob([text + '\n'], { type: 'application/json' }));
+    resultUrls.push(href);
+    return el('details', { class: 'json' },
+      el('summary', { text: title }),
+      el('div', { class: 'json-tools' }, copy, el('a', { class: 'mini', href, download: filename, text: `Download ${filename}` })),
+      el('pre', { text }),
+    );
+  }
+
+  function resultCard(title, meta, ...body) {
+    return el('section', { class: 'card' },
+      el('div', { class: 'result-head' }, el('h2', { text: title }), el('span', { class: 'meta', text: meta })),
+      el('div', { class: 'result-body' }, ...body),
+    );
+  }
+
+  function runMeta(doc, elapsed) {
+    const layers = doc.config.extra_layers.length ? ` + ${doc.config.extra_layers.join(', ')}` : '';
+    const work = doc.image.working_size;
+    return `${doc.config.backend} backend${layers} · working size ${work.width}×${work.height} · ${elapsed.toFixed(1)} s`;
+  }
+
+  function renderScore(body, file) {
+    resetResults();
+    const doc = body.score;
+    results.replaceChildren(resultCard(
+      doc.image.path,
+      runMeta(doc, body.elapsed_seconds),
+      el('div', { class: 'figs' }, figure('Attention overlay', body.overlay, file, doc)),
+      el('div', { class: 'tables' }, regionTable(doc), focalTable(doc)),
+      jsonBlock('Score JSON (schema v1, same as hotgaze score --json)', doc, `${stem(doc.image.path)}_score.json`),
+    ));
+  }
+
+  function deltaTable(compare) {
+    return table('Attention share by region', [['Region'], ['A', 'num'], ['B', 'num'], ['Δ B − A', 'num'], ['Relative', 'num']],
+      compare.per_region_deltas.map((row) => {
+        const relative = row.share_a > 0 ? signed((row.delta / row.share_a) * 100, 0, '%') : '—';
+        return [
+          el('td', { class: 'name', text: row.name }),
+          el('td', { class: 'num', text: pct(row.share_a) }),
+          el('td', { class: 'num', text: pct(row.share_b) }),
+          el('td', { class: `num ${trend(row.delta)}`, text: pp(row.delta) }),
+          el('td', { class: `num ${trend(row.delta)}`, text: relative }),
+        ];
+      }),
+      'no regions.');
+  }
+
+  function gridView(grid) {
+    const peak = Math.max(...grid.map(Math.abs), 1e-9);
+    const shade = (value) => {
+      const rgb = value >= 0 ? 'var(--gain-rgb)' : 'var(--loss-rgb)';
+      return `rgba(${rgb}, ${(0.08 + (Math.abs(value) / peak) * 0.5).toFixed(3)})`;
+    };
+    return el('div', {},
+      el('p', { class: 'empty' }, el('strong', { text: '3×3 attention-share deltas' }), ' — B − A per ninth of the image; green means B draws more attention there.'),
+      el('div', { class: 'grid9', role: 'img', 'aria-label': 'Three by three grid of attention-share deltas' },
+        grid.map((value) => el('div', { class: trend(value), style: { background: shade(value) }, text: pp(value) }))),
+    );
+  }
+
+  function movementTable(compare) {
+    const xy = (x, y) => (x < 0 ? '—' : `${x}, ${y}`);
+    return table('Focal-point movement', [['#', 'num'], ['A (x, y)', 'num'], ['B (x, y)', 'num'], ['Moved', 'num']],
+      compare.focal_point_movement.map((row) => [
+        el('td', { class: 'num', text: String(row.rank) }),
+        el('td', { class: 'num', text: xy(row.x_a, row.y_a) }),
+        el('td', { class: 'num', text: xy(row.x_b, row.y_b) }),
+        el('td', { class: 'num', text: row.distance < 0 ? '—' : `${row.distance.toFixed(0)} px` }),
+      ]),
+      'none found.');
+  }
+
+  function renderCompare(body, files) {
+    resetResults();
+    const compare = body.compare.compare;
+    const hasRegions = compare.per_region_deltas.length > 0;
+    results.replaceChildren(resultCard(
+      `${body.score_a.image.path} → ${body.score_b.image.path}`,
+      runMeta(body.score_a, body.elapsed_seconds),
+      el('div', { class: 'figs' },
+        figure('A · baseline', body.overlay_a, files.a, body.score_a),
+        figure('B · candidate', body.overlay_b, files.b, body.score_b)),
+      hasRegions
+        ? el('div', { class: 'tables' }, deltaTable(compare))
+        : el('div', { class: 'tables' }, gridView(compare.grid_deltas), movementTable(compare)),
+      el('p', { class: 'hint' }, hasRegions
+        ? 'Δ is the change in each region’s share of total attention, in percentage points; Relative is that change as a fraction of A’s share.'
+        : 'Add regions to get per-region deltas — fractional regions (…f) also work when A and B have different sizes.'),
+      jsonBlock('Compare JSON (schema v1, same as hotgaze compare --json)', body.compare, 'compare.json'),
+    ));
+  }
+
+  setMode('score');
+  loadInfo();
+})();
+</script>
+</body>
+</html>

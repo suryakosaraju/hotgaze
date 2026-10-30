@@ -1,0 +1,46 @@
+# Render Blueprint for the HotGaze web demo — https://render.com/docs/blueprint-spec
+#
+# Deploys web/app.py, a small FastAPI front end over the HotGaze engine, as one
+# web service. In the Render Dashboard: New → Blueprint → pick this repository
+# and branch → Apply. See web/README.md for details.
+services:
+  - type: web
+    name: hotgaze
+    runtime: python
+    # 512 MB RAM, 0.1 CPU; sleeps after 15 min without traffic (~1 min to wake).
+    plan: free
+    # Closest region to East Asia. Fixed once the service exists; other options:
+    # oregon, ohio, virginia, frankfurt.
+    region: singapore
+    buildCommand: bash web/render-build.sh
+    startCommand: uvicorn app:app --app-dir web --host 0.0.0.0 --port $PORT
+    healthCheckPath: /healthz
+    envVars:
+      # Render needs a full x.y.z version here; 3.12 matches the README and CI.
+      - key: PYTHON_VERSION
+        value: 3.12.13
+      # Inside the project directory, so weights fetched during the build ship
+      # with the deploy instead of being downloaded on the first request.
+      - key: HOTGAZE_CACHE
+        value: /opt/render/project/src/.hotgaze-cache
+      # Largest accepted screenshot. A 10 MP compare peaks around 390 MB RSS
+      # (with the malloc settings below), which fits the free plan; raise it on
+      # larger instances.
+      - key: HOTGAZE_WEB_MAX_PIXELS
+        value: "10000000"
+      # "true" installs CPU-only PyTorch for the deep (UNISAL) backend. It peaks
+      # at ~0.7–0.8 GB per image, so it also needs plan 1c-2g or larger.
+      - key: HOTGAZE_ENABLE_DEEP
+        value: "false"
+      - key: WEB_CONCURRENCY
+        value: "1"
+      # glibc tuning for 512 MB: a fixed mmap threshold hands large numpy
+      # buffers back to the OS as soon as they are freed (10 MP compare peak
+      # ~390 MB instead of ~460 MB), and fewer arenas limit fragmentation.
+      - key: MALLOC_MMAP_THRESHOLD_
+        value: "131072"
+      - key: MALLOC_ARENA_MAX
+        value: "2"
+      # Hides OpenCV 5 DNN notices that the faces layer logs on every request.
+      - key: OPENCV_LOG_LEVEL
+        value: ERROR
