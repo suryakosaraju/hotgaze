@@ -1,699 +1,449 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>HotGaze — attention heatmaps for UI screenshots</title>
-<meta name="description" content="Predict where users' eyes land on a UI screenshot, score regions and compare A/B variants.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23e8590c'/%3E%3Ccircle cx='16' cy='16' r='8' fill='%23ffd43b'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%23fff'/%3E%3C/svg%3E">
-<style>
-  :root {
-    color-scheme: light dark;
-    --bg: #f5f6fa;
-    --surface: #ffffff;
-    --surface-2: #eef0f6;
-    --border: #dde1eb;
-    --text: #171b2c;
-    --muted: #5b6277;
-    --accent: #d9480f;
-    --accent-hover: #b93a0a;
-    --accent-ink: #ffffff;
-    --focus: #2563eb;
-    --gain: #15803d;
-    --loss: #c2261c;
-    --gain-rgb: 21, 128, 61;
-    --loss-rgb: 194, 38, 28;
-    --radius: 12px;
-    --shadow: 0 1px 2px rgba(16, 24, 40, .05), 0 2px 8px rgba(16, 24, 40, .06);
-    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
-      "PingFang SC", "Microsoft YaHei", sans-serif;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #0e1016;
-      --surface: #161a23;
-      --surface-2: #1e2331;
-      --border: #2b3142;
-      --text: #e7e9f1;
-      --muted: #9aa1b6;
-      --accent: #ff7a3d;
-      --accent-hover: #ff9663;
-      --accent-ink: #1d0b02;
-      --focus: #7aa2ff;
-      --gain: #4ade80;
-      --loss: #f87171;
-      --gain-rgb: 74, 222, 128;
-      --loss-rgb: 248, 113, 113;
-      --shadow: none;
-    }
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text); }
-  a { color: inherit; }
-  h1, h2, h3 { line-height: 1.25; margin: 0; }
-  button, input, select, textarea { font: inherit; color: inherit; }
-  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-  [hidden] { display: none !important; }
-
-  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
-  header.top { padding: 28px 0 20px; }
-  .top .wrap { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between; }
-  .brand { display: flex; gap: 14px; align-items: center; }
-  .logo {
-    width: 40px; height: 40px; border-radius: 50%; flex: none;
-    background: radial-gradient(circle at 50% 50%, #fff 0 14%, #ffd43b 15% 38%, #f76707 39% 62%, #c92a2a 63%);
-  }
-  .brand h1 { font-size: 22px; letter-spacing: -.01em; }
-  .brand p { margin: 2px 0 0; color: var(--muted); }
-  nav { display: flex; gap: 16px; align-items: center; font-size: 14px; }
-  nav a { color: var(--muted); text-decoration: none; }
-  nav a:hover { color: var(--text); text-decoration: underline; }
-  .pill { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--muted); }
-
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
-  .panel { padding: 20px; }
-
-  .tabs { display: inline-flex; gap: 4px; padding: 4px; background: var(--surface-2); border-radius: 10px; margin-bottom: 18px; flex-wrap: wrap; }
-  .tabs button {
-    border: 0; background: transparent; padding: 7px 14px; border-radius: 7px; cursor: pointer; color: var(--muted); font-weight: 500;
-  }
-  .tabs button[aria-selected="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
-
-  .grid-form { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 20px; }
-  @media (max-width: 860px) { .grid-form { grid-template-columns: minmax(0, 1fr); } }
-
-  .drops { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); align-content: start; }
-  .drop {
-    position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
-    min-height: 196px; padding: 16px; border: 1.5px dashed var(--border); border-radius: 10px; background: var(--surface-2);
-    cursor: pointer; transition: border-color .15s, background .15s;
-  }
-  .drop:hover, .drop.over { border-color: var(--accent); }
-  .drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
-  .drop input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-  .drop .thumb { max-width: 100%; max-height: 120px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 8px; background: #fff; }
-  .drop-title { font-weight: 600; }
-  .drop-hint, .drop-file { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
-
-  .options { display: grid; gap: 14px; grid-template-columns: 1fr 1fr; align-content: start; }
-  .field { display: flex; flex-direction: column; gap: 6px; font-weight: 500; font-size: 14px; }
-  .field.wide { grid-column: 1 / -1; }
-  .field small { display: block; font-weight: 400; color: var(--muted); font-size: 12.5px; }
-  .field output { font-weight: 400; color: var(--muted); }
-  select, textarea {
-    width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface);
-  }
-  textarea { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; resize: vertical; min-height: 84px; }
-  input[type="range"] { width: 100%; accent-color: var(--accent); }
-  .check { display: flex; gap: 8px; align-items: center; font-size: 14px; grid-column: 1 / -1; }
-  .check input { accent-color: var(--accent); width: 16px; height: 16px; }
-  .check small { color: var(--muted); }
-
-  .actions { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: center; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
-  .btn {
-    border: 1px solid var(--border); background: var(--surface); padding: 9px 16px; border-radius: 9px; cursor: pointer; font-weight: 600;
-  }
-  .btn:hover { background: var(--surface-2); }
-  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-  .btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
-  .btn:disabled { opacity: .55; cursor: progress; }
-  .status { font-size: 14px; color: var(--muted); flex: 1 1 260px; }
-  .status.error { color: var(--loss); }
-  .spinner {
-    display: inline-block; width: 14px; height: 14px; margin-right: 6px; vertical-align: -2px; border-radius: 50%;
-    border: 2px solid var(--border); border-top-color: var(--accent); animation: spin .8s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  #results { margin: 20px 0 8px; display: grid; gap: 20px; }
-  .result-head { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }
-  .result-head h2 { font-size: 17px; overflow-wrap: anywhere; }
-  .meta { color: var(--muted); font-size: 13.5px; }
-  .result-body { padding: 20px; display: grid; gap: 22px; }
-  .figs { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); }
-  figure { margin: 0; min-width: 0; }
-  figcaption { display: flex; gap: 8px; align-items: baseline; margin-bottom: 8px; flex-wrap: wrap; }
-  /* The padding keeps focal points and labels on the image edges visible. */
-  .scroller { max-height: 78vh; overflow: auto; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-2); }
-  .stage { position: relative; width: fit-content; max-width: 100%; margin: 0 auto; }
-  .stage img { display: block; max-width: 100%; height: auto; }
-  .marks { position: absolute; inset: 0; pointer-events: none; }
-  .box { position: absolute; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, .65), inset 0 0 0 1px rgba(0, 0, 0, .35); border-radius: 2px; }
-  .tag {
-    position: absolute; left: -2px; bottom: 100%; margin-bottom: 3px; white-space: nowrap; font-size: 12px; line-height: 1.3; font-weight: 600;
-    padding: 2px 6px; border-radius: 4px; background: rgba(12, 14, 22, .85); color: #fff;
-  }
-  .tag.inside { bottom: auto; top: 2px; left: 2px; margin: 0; }
-  .focal {
-    position: absolute; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; display: grid; place-items: center;
-    font-size: 11.5px; font-weight: 700; color: #111; background: #fff; box-shadow: 0 0 0 2px rgba(0, 0, 0, .7);
-  }
-  .fig-tools { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-top: 10px; font-size: 13.5px; }
-  .mini { border: 1px solid var(--border); background: var(--surface); border-radius: 7px; padding: 4px 10px; cursor: pointer; text-decoration: none; font-size: 13px; }
-  .mini:hover { background: var(--surface-2); }
-  .fig-tools label { display: flex; gap: 6px; align-items: center; color: var(--muted); }
-
-  .tables { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); align-items: start; }
-  .table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  caption { text-align: left; font-weight: 600; padding-bottom: 8px; }
-  caption small { font-weight: 400; color: var(--muted); }
-  th, td { padding: 7px 10px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
-  th { font-size: 12.5px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
-  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
-  .name { font-weight: 600; white-space: normal; overflow-wrap: break-word; }
-  @media (max-width: 560px) { .col-box { display: none; } }
-  .bar { display: inline-block; height: 6px; border-radius: 3px; background: var(--accent); vertical-align: middle; margin-left: 8px; opacity: .8; }
-  .gain { color: var(--gain); font-weight: 600; }
-  .loss { color: var(--loss); font-weight: 600; }
-  .empty { color: var(--muted); font-size: 14px; }
-
-  .grid9 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; max-width: 420px; }
-  .grid9 div { padding: 14px 6px; border-radius: 6px; text-align: center; font-variant-numeric: tabular-nums; font-size: 13.5px; font-weight: 600; background: var(--surface-2); }
-
-  details.json { border: 1px solid var(--border); border-radius: 10px; }
-  details.json summary { cursor: pointer; padding: 10px 14px; font-weight: 600; }
-  .json-tools { display: flex; gap: 8px; padding: 0 14px 10px; flex-wrap: wrap; }
-  details.json pre {
-    margin: 0; padding: 12px 14px; max-height: 420px; overflow: auto; border-top: 1px solid var(--border);
-    font: 12.5px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--surface-2); border-radius: 0 0 10px 10px;
-  }
-  .hint { color: var(--muted); font-size: 13.5px; margin: 0; }
-  footer { color: var(--muted); font-size: 13px; padding: 20px 0 36px; }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>焦点 Focal · 免费在线抠图、消除与注意力热力图</title>
+  <meta name="description" content="免费在线抠图、涂抹消除和注意力热力图。上传图片，几秒钟得到透明背景 PNG；涂掉不想要的东西，背景自动补全。无需注册，图片处理完立即删除。">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="icon" href="/static/img/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="/static/fonts/figtree-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/static/img/portrait.webp" as="image">
+  <link rel="preload" href="/static/img/portrait-cutout.webp" as="image">
+  <link rel="stylesheet" href="/static/css/focal.css">
+  <script type="module" src="/static/js/app.js"></script>
 </head>
 <body>
-<header class="top">
-  <div class="wrap">
-    <div class="brand">
-      <span class="logo" aria-hidden="true"></span>
-      <div>
-        <h1>HotGaze</h1>
-        <p>Predict where eyes land on a UI screenshot — and get the numbers.</p>
-      </div>
-    </div>
-    <nav>
-      <span class="pill" id="version">…</span>
-      <a href="/docs">API docs</a>
-      <a href="https://github.com/suryakosaraju/hotgaze" rel="noopener">GitHub</a>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15.5V4.5"/><path d="M7.5 9 12 4.5 16.5 9"/><path d="M4.5 15v3a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-3"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="m20.5 15.5-4.8-4.8L6.5 19.5"/></symbol>
+    <symbol id="i-cutout" viewBox="0 0 24 24"><circle cx="6.5" cy="6.5" r="2.8"/><circle cx="6.5" cy="17.5" r="2.8"/><path d="M8.6 8.4 19.5 19"/><path d="M8.6 15.6 19.5 5"/></symbol>
+    <symbol id="i-erase" viewBox="0 0 24 24"><path d="M8.5 20.5h12"/><path d="m3.9 15.2 9.3-9.3a2.2 2.2 0 0 1 3.1 0l3.3 3.3a2.2 2.2 0 0 1 0 3.1l-8.3 8.2H8.2l-4.3-4.2a.8.8 0 0 1 0-1.1Z"/><path d="m9.2 9.9 6.4 6.4"/></symbol>
+    <symbol id="i-focus" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="2.5"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17"/><path d="M12 3.5c2.4 2.3 3.6 5.1 3.6 8.5s-1.2 6.2-3.6 8.5c-2.4-2.3-3.6-5.1-3.6-8.5S9.6 5.8 12 3.5Z"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4.5v11"/><path d="M7.5 11 12 15.5 16.5 11"/><path d="M5 19.5h14"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2.2"/><path d="M15 5.5a1.5 1.5 0 0 0-1.5-1.5H6A2 2 0 0 0 4 6v7.5A1.5 1.5 0 0 0 5.5 15"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14.5 4.5 10 9 5.5"/><path d="M4.5 10H14a5.5 5.5 0 0 1 0 11h-3"/></symbol>
+    <symbol id="i-redo" viewBox="0 0 24 24"><path d="m15 14.5 4.5-4.5L15 5.5"/><path d="M19.5 10H10a5.5 5.5 0 0 0 0 11h3"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.5 7h15"/><path d="M9.5 7V4.5h5V7"/><path d="m6.5 7 .9 11.6a2 2 0 0 0 2 1.9h5.2a2 2 0 0 0 2-1.9L17.5 7"/><path d="M10.2 11v5.5M13.8 11v5.5"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="2.8"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.2"/><path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3"/></symbol>
+    <symbol id="i-badge" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="m8.3 12.3 2.6 2.6 4.9-5.4"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><path d="M8 7.5 3.5 12 8 16.5"/><path d="M16 7.5l4.5 4.5-4.5 4.5"/><path d="m13.6 4.5-3.2 15"/></symbol>
+    <symbol id="i-drag" viewBox="0 0 24 24"><path d="M9 7 4 12l5 5"/><path d="m15 7 5 5-5 5"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v5.5"/><path d="M12 16.4v.1"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><path d="M12 7.6v.1"/></symbol>
+    <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></symbol>
+    <symbol id="i-brush" viewBox="0 0 24 24"><path d="m14 4.5 5.5 5.5-7.8 7.8-5.5-5.5Z"/><path d="M6.2 12.3 4 14.5c-1 1-1 2.6 0 3.6l1.9 1.9c1 1 2.6 1 3.6 0l2.2-2.2"/></symbol>
+  </defs>
+</svg>
+
+<a class="skip-link" href="#main" data-i18n="skip">跳到主要内容</a>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <a class="brand" href="/" data-link aria-label="焦点 Focal">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+        <rect width="32" height="32" rx="9" fill="#1f4fe0"/>
+        <path d="M9 13.5v-3A1.5 1.5 0 0 1 10.5 9h3M18.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3M23 18.5v3a1.5 1.5 0 0 1-1.5 1.5h-3M13.5 23h-3A1.5 1.5 0 0 1 9 21.5v-3" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+        <circle cx="16" cy="16" r="3" fill="#fff"/>
+      </svg>
+      <span class="brand-name">焦点</span>
+      <span class="brand-latin">Focal</span>
+    </a>
+    <nav class="site-nav" aria-label="工具" data-i18n-attr="aria-label:nav.label">
+      <a href="/cutout" data-link data-route="cutout"><svg class="icon" aria-hidden="true"><use href="#i-cutout"/></svg><span data-i18n="nav.cutout">智能抠图</span></a>
+      <a href="/erase" data-link data-route="erase"><svg class="icon" aria-hidden="true"><use href="#i-erase"/></svg><span data-i18n="nav.erase">涂抹消除</span></a>
+      <a href="/heatmap" data-link data-route="heatmap"><svg class="icon" aria-hidden="true"><use href="#i-focus"/></svg><span data-i18n="nav.heatmap">注意力热力图</span></a>
     </nav>
+    <button type="button" class="lang-toggle" id="lang-toggle" lang="en" aria-label="Switch to English" data-i18n-attr="aria-label:lang.toggle_label">
+      <svg class="icon" aria-hidden="true"><use href="#i-globe"/></svg><span data-i18n="lang.toggle">EN</span>
+    </button>
   </div>
 </header>
 
-<main class="wrap">
-  <section class="card panel">
-    <div class="tabs" role="tablist" aria-label="Mode">
-      <button type="button" role="tab" id="tab-score" aria-selected="true" data-mode="score">Analyze</button>
-      <button type="button" role="tab" id="tab-compare" aria-selected="false" data-mode="compare">Compare A / B</button>
+<main id="main" tabindex="-1">
+
+  <!-- ── Home ─────────────────────────────────────────────────────────────── -->
+  <section class="view" data-view="home" hidden>
+    <div class="hero">
+      <div class="hero-copy">
+        <h1 tabindex="-1"><span data-i18n="home.h1a">免费抠图、消除杂物，</span><br> <span data-i18n="home.h1b">还能预测用户先看哪里</span></h1>
+        <p class="lead" data-i18n="home.lead">上传一张图片，几秒钟得到透明背景 PNG；涂掉不想要的东西，背景自动补全。图片处理完立即删除，无需注册。</p>
+
+        <div class="dropzone hero-drop" id="home-drop">
+          <button type="button" class="btn btn-primary btn-lg" data-browse>
+            <svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg><span data-i18n="home.drop_title">上传图片</span>
+          </button>
+          <p class="dropzone-hint" data-i18n="home.drop_hint">或把图片拖到这里，也可以直接粘贴（Ctrl+V）</p>
+          <p class="dropzone-formats" data-i18n="home.formats">支持 PNG、JPG、WebP，最大 20 MB</p>
+          <input type="file" accept="image/png,image/jpeg,image/webp" hidden>
+        </div>
+
+        <div class="chooser" id="home-chooser" hidden>
+          <div class="chooser-head">
+            <div>
+              <p data-i18n="home.choose">要对这张图做什么？</p>
+              <small class="chooser-file"></small>
+            </div>
+          </div>
+          <div class="chooser-actions">
+            <button type="button" class="btn" data-tool="cutout"><svg class="icon" aria-hidden="true"><use href="#i-cutout"/></svg><span data-i18n="home.choose_cutout">抠图去背景</span></button>
+            <button type="button" class="btn" data-tool="erase"><svg class="icon" aria-hidden="true"><use href="#i-erase"/></svg><span data-i18n="home.choose_erase">涂抹消除</span></button>
+            <button type="button" class="btn" data-tool="heatmap"><svg class="icon" aria-hidden="true"><use href="#i-focus"/></svg><span data-i18n="home.choose_heatmap">注意力热力图</span></button>
+          </div>
+          <div><button type="button" class="btn btn-quiet btn-sm" data-reset><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg><span data-i18n="home.choose_other">换一张图</span></button></div>
+        </div>
+
+        <div class="samples hero-samples">
+          <span data-i18n="home.samples">没有图片？试试示例：</span>
+          <button type="button" class="sample-chip" data-sample="cutout"><img src="/static/img/portrait.webp" alt="" width="28" height="28"><span data-i18n="home.sample_cutout">人像抠图</span></button>
+          <button type="button" class="sample-chip" data-sample="erase"><img src="/static/img/coffee.webp" alt="" width="28" height="28"><span data-i18n="home.sample_erase">消除杂物</span></button>
+          <button type="button" class="sample-chip" data-sample="heatmap"><img src="/static/img/samples/shop-a.webp" alt="" width="28" height="28"><span data-i18n="home.sample_heatmap">网页热力图</span></button>
+        </div>
+      </div>
+
+      <div class="showcase">
+        <div class="showcase-bar">
+          <div class="segmented" role="tablist" aria-label="效果示例" data-i18n-attr="aria-label:showcase.label">
+            <button type="button" role="tab" aria-selected="true" aria-controls="showcase-stage" data-example="cutout" data-i18n="showcase.cutout">抠图</button>
+            <button type="button" role="tab" aria-selected="false" aria-controls="showcase-stage" data-example="erase" tabindex="-1" data-i18n="showcase.erase">消除</button>
+            <button type="button" role="tab" aria-selected="false" aria-controls="showcase-stage" data-example="heatmap" tabindex="-1" data-i18n="showcase.heatmap">热力图</button>
+          </div>
+          <p class="showcase-caption" data-i18n="showcase.hint">拖动中间的手柄，对比处理前后</p>
+        </div>
+        <div id="showcase-stage" role="tabpanel"></div>
+      </div>
     </div>
 
-    <form id="form" novalidate>
-      <div class="grid-form">
-        <div class="drops">
-          <label class="drop" data-slot="a">
-            <input type="file" accept="image/png,image/jpeg,image/webp" aria-label="Screenshot">
-            <img class="thumb" alt="" hidden>
-            <span class="drop-title" data-title-score="Screenshot" data-title-compare="A · baseline">Screenshot</span>
-            <span class="drop-hint">Drop a PNG, JPEG or WebP here, or click to choose</span>
-            <span class="drop-file"></span>
-          </label>
-          <label class="drop" data-slot="b" hidden>
-            <input type="file" accept="image/png,image/jpeg,image/webp" aria-label="Screenshot B">
-            <img class="thumb" alt="" hidden>
-            <span class="drop-title">B · candidate</span>
-            <span class="drop-hint">Drop a PNG, JPEG or WebP here, or click to choose</span>
-            <span class="drop-file"></span>
-          </label>
-        </div>
+    <section class="promises" aria-label="承诺" data-i18n-attr="aria-label:promise.label">
+      <ul>
+        <li><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg><span data-i18n="promise.private">图片处理完立即删除</span></li>
+        <li><svg class="icon" aria-hidden="true"><use href="#i-badge"/></svg><span data-i18n="promise.free">免费，无需注册</span></li>
+        <li><svg class="icon" aria-hidden="true"><use href="#i-code"/></svg><span data-i18n="promise.open">基于开源模型</span></li>
+      </ul>
+    </section>
 
-        <div class="options">
-          <label class="field wide">
-            <span>Regions <small id="regions-help">Optional, one per line: <code>name:x,y,w,h</code> in pixels or <code>name:0.1,0.2,0.3,0.08f</code> as fractions of the image.</small></span>
-            <textarea id="regions" rows="3" spellcheck="false" placeholder="cta:250,200,200,35&#10;headline:0.10,0.08,0.60,0.18f"></textarea>
-          </label>
-          <label class="field">
-            <span>Backend</span>
-            <select id="backend">
-              <option value="fast">fast — heuristic</option>
-              <option value="deep">deep — UNISAL</option>
-            </select>
-          </label>
-          <label class="field">
-            <span>Colormap</span>
-            <select id="colormap">
-              <option value="jet">jet</option>
-              <option value="turbo">turbo</option>
-            </select>
-          </label>
-          <label class="field wide">
-            <span>Overlay opacity <output id="alpha-out" for="alpha">0.60</output></span>
-            <input id="alpha" type="range" min="0" max="1" step="0.05" value="0.6">
-          </label>
-          <label class="check">
-            <input id="faces" type="checkbox">
-            <span>Faces layer <small>— YuNet adds attention over detected faces</small></span>
-          </label>
+    <div class="features">
+      <article class="feature">
+        <div class="feature-media">
+          <div class="pair">
+            <figure><img src="/static/img/teapot.webp" alt="深灰背景前的青花提梁茶壶" data-i18n-attr="alt:feature.cutout.alt_before" width="1000" height="1000" loading="lazy"><figcaption data-i18n="feature.before">原图</figcaption></figure>
+            <figure><img src="/static/img/teapot-white.webp" alt="同一把茶壶抠出后放在纯白背景上" data-i18n-attr="alt:feature.cutout.alt_after" width="1000" height="1000" loading="lazy"><figcaption data-i18n="feature.after_white">白底图</figcaption></figure>
+          </div>
         </div>
-      </div>
+        <div class="feature-copy">
+          <h2 data-i18n="feature.cutout.title">一键抠图，导出透明 PNG</h2>
+          <p data-i18n="feature.cutout.body">自动识别人物、商品和动物，发丝这样的细节也能保留。抠好后可以换成白底、黑底或任意颜色再下载。</p>
+          <ul>
+            <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span data-i18n="feature.cutout.point1">大约 10 秒出结果</span></li>
+            <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span data-i18n="feature.cutout.point2">适合电商白底图、证件照和海报素材</span></li>
+          </ul>
+          <a class="btn btn-primary" href="/cutout" data-link><span data-i18n="feature.cutout.cta">开始抠图</span><svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+        </div>
+      </article>
 
-      <div class="actions">
-        <button type="submit" class="btn primary" id="run">Run analysis</button>
-        <button type="button" class="btn" id="sample" hidden>Try a sample</button>
-        <span class="status" id="status" role="status" aria-live="polite"></span>
-      </div>
-    </form>
+      <article class="feature">
+        <div class="feature-media">
+          <div class="pair">
+            <figure><img src="/static/img/coffee.webp" alt="咖啡杯旁有一把勺子" data-i18n-attr="alt:feature.erase.alt_before" width="600" height="400" loading="lazy"><figcaption data-i18n="feature.before">原图</figcaption></figure>
+            <figure><img src="/static/img/coffee-erased.webp" alt="勺子被消除后的咖啡杯" data-i18n-attr="alt:feature.erase.alt_after" width="600" height="400" loading="lazy"><figcaption data-i18n="feature.after">处理后</figcaption></figure>
+          </div>
+        </div>
+        <div class="feature-copy">
+          <h2 data-i18n="feature.erase.title">涂哪里，哪里就消失</h2>
+          <p data-i18n="feature.erase.body">用画笔涂掉路人、杂物、水印或文字，模型会根据周围的画面把背景补上。不满意可以撤销，接着再涂。</p>
+          <ul>
+            <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span data-i18n="feature.erase.point1">可以反复消除，直到满意</span></li>
+            <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span data-i18n="feature.erase.point2">支持撤销、重做和按住对比原图</span></li>
+          </ul>
+          <a class="btn btn-primary" href="/erase" data-link><span data-i18n="feature.erase.cta">开始消除</span><svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+        </div>
+      </article>
+
+      <article class="feature">
+        <div class="feature-media">
+          <div class="pair">
+            <figure class="focus-left"><img src="/static/img/shop-a-heatmap.webp" alt="商品页原版本的注意力热力图，标题、价格和购买按钮最热" data-i18n-attr="alt:feature.heatmap.alt_before" width="1280" height="800" loading="lazy"><figcaption data-i18n="cmp.a">A · 原版本</figcaption></figure>
+            <figure class="focus-left"><img src="/static/img/shop-b-heatmap.webp" alt="加了促销角标的新版本，角标分走了一部分注意力" data-i18n-attr="alt:feature.heatmap.alt_after" width="1280" height="800" loading="lazy"><figcaption data-i18n="cmp.b">B · 新版本</figcaption></figure>
+          </div>
+        </div>
+        <div class="feature-copy">
+          <h2 data-i18n="feature.heatmap.title">上线之前，先看用户会看哪里</h2>
+          <p data-i18n="feature.heatmap.body">上传界面截图，预测视线会落在哪里，并算出你标出的每个区域分到多少注意力；还能对比两个版本，看哪个更抓眼球。</p>
+          <ul>
+            <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span data-i18n="feature.heatmap.point1">给出数字，而不只是一张图</span></li>
+            <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span data-i18n="feature.heatmap.point2">支持两个版本 A/B 对比</span></li>
+          </ul>
+          <a class="btn btn-primary" href="/heatmap" data-link><span data-i18n="feature.heatmap.cta">分析截图</span><svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+        </div>
+      </article>
+    </div>
   </section>
 
-  <div id="results"></div>
+  <!-- ── Cutout ───────────────────────────────────────────────────────────── -->
+  <section class="view tool" data-view="cutout" hidden>
+    <header class="tool-head">
+      <h1 tabindex="-1" data-i18n="cutout.h1">智能抠图</h1>
+      <p data-i18n="cutout.lead">自动去掉背景，导出透明 PNG。适合商品图、人像和海报素材。</p>
+    </header>
+    <div class="workspace">
+      <div class="tool-main">
+        <div class="notice-slot"></div>
+        <div class="stage is-empty" id="cutout-stage">
+          <div class="empty" data-empty>
+            <div class="drop-prompt">
+              <svg class="icon icon-lg" aria-hidden="true"><use href="#i-image"/></svg>
+              <button type="button" class="btn btn-primary btn-lg" data-browse><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg><span data-i18n="home.drop_title">上传图片</span></button>
+              <p class="dropzone-hint" data-i18n="home.drop_hint">或把图片拖到这里，也可以直接粘贴（Ctrl+V）</p>
+              <p class="dropzone-formats" data-i18n="home.formats">支持 PNG、JPG、WebP，最大 20 MB</p>
+            </div>
+            <div class="samples">
+              <span data-i18n="home.samples">没有图片？试试示例：</span>
+              <button type="button" class="sample-chip" data-sample="portrait"><img src="/static/img/portrait.webp" alt="" width="28" height="28"><span data-i18n="cutout.sample_portrait">人像</span></button>
+              <button type="button" class="sample-chip" data-sample="product"><img src="/static/img/teapot.webp" alt="" width="28" height="28"><span data-i18n="cutout.sample_product">商品</span></button>
+            </div>
+          </div>
+          <div class="result" data-result hidden></div>
+        </div>
+      </div>
+      <aside class="panel" aria-labelledby="cutout-panel-title">
+        <h2 class="visually-hidden" id="cutout-panel-title" data-i18n="tool.panel">设置与导出</h2>
+        <div class="panel-section">
+          <div class="status" data-status aria-live="polite"><svg class="icon" aria-hidden="true"><use href="#i-info"/></svg><span data-i18n="cutout.idle">选择图片后会自动开始抠图。</span></div>
+          <p class="meta num" data-meta hidden></p>
+        </div>
+        <div class="panel-section">
+          <span class="field-label" id="cutout-bg-label" data-i18n="cutout.background">背景</span>
+          <div class="swatches" role="group" aria-labelledby="cutout-bg-label">
+            <button type="button" class="swatch checker" data-bg="" aria-pressed="true" aria-label="透明" title="透明" data-i18n-attr="aria-label:cutout.bg_transparent;title:cutout.bg_transparent"></button>
+            <button type="button" class="swatch" data-bg="#ffffff" style="background:#ffffff" aria-pressed="false" aria-label="白色" title="白色" data-i18n-attr="aria-label:cutout.bg_white;title:cutout.bg_white"></button>
+            <button type="button" class="swatch" data-bg="#000000" style="background:#000000" aria-pressed="false" aria-label="黑色" title="黑色" data-i18n-attr="aria-label:cutout.bg_black;title:cutout.bg_black"></button>
+            <span class="swatch swatch-custom" data-bg-custom title="自定义颜色" data-i18n-attr="title:cutout.bg_custom"><input type="color" value="#1f4fe0" aria-label="自定义颜色" data-i18n-attr="aria-label:cutout.bg_custom"></span>
+          </div>
+        </div>
+        <div class="panel-section panel-actions">
+          <button type="button" class="btn btn-primary btn-lg btn-block" data-download disabled><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span data-i18n="tool.download_png">下载 PNG</span></button>
+          <div class="panel-row">
+            <button type="button" class="btn" data-copy disabled><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span data-i18n="tool.copy">复制图片</span></button>
+            <button type="button" class="btn" data-browse><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg><span data-i18n="tool.new">换一张图片</span></button>
+          </div>
+        </div>
+        <p class="fineprint" data-i18n="cutout.note">抠图模型 BRIA RMBG-1.4 仅限非商业使用。</p>
+      </aside>
+    </div>
+    <input type="file" accept="image/png,image/jpeg,image/webp" hidden data-file>
+  </section>
+
+  <!-- ── Erase ────────────────────────────────────────────────────────────── -->
+  <section class="view tool" data-view="erase" hidden>
+    <header class="tool-head">
+      <h1 tabindex="-1" data-i18n="erase.h1">涂抹消除</h1>
+      <p data-i18n="erase.lead">用画笔涂掉不想要的东西，背景会自动补全。</p>
+    </header>
+    <div class="workspace">
+      <div class="tool-main">
+        <div class="notice-slot"></div>
+        <div class="toolbar" data-toolbar hidden>
+          <div class="toolbar-group toolbar-brush">
+            <label>
+              <svg class="icon" aria-hidden="true"><use href="#i-brush"/></svg>
+              <span data-i18n="erase.brush">画笔大小</span>
+              <input type="range" min="8" max="160" step="2" value="48" data-brush>
+              <output class="num" data-brush-out>48</output>
+            </label>
+          </div>
+          <div class="toolbar-group">
+            <button type="button" class="icon-btn" data-undo disabled aria-label="撤销" title="撤销 (Ctrl+Z)" data-i18n-attr="aria-label:erase.undo;title:erase.undo_title"><svg class="icon" aria-hidden="true"><use href="#i-undo"/></svg></button>
+            <button type="button" class="icon-btn" data-redo disabled aria-label="重做" title="重做 (Ctrl+Shift+Z)" data-i18n-attr="aria-label:erase.redo;title:erase.redo_title"><svg class="icon" aria-hidden="true"><use href="#i-redo"/></svg></button>
+            <button type="button" class="icon-btn" data-clear disabled aria-label="清除涂抹" title="清除涂抹" data-i18n-attr="aria-label:erase.clear;title:erase.clear"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg></button>
+          </div>
+        </div>
+        <div class="stage is-empty" id="erase-stage">
+          <div class="empty" data-empty>
+            <div class="drop-prompt">
+              <svg class="icon icon-lg" aria-hidden="true"><use href="#i-image"/></svg>
+              <button type="button" class="btn btn-primary btn-lg" data-browse><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg><span data-i18n="home.drop_title">上传图片</span></button>
+              <p class="dropzone-hint" data-i18n="home.drop_hint">或把图片拖到这里，也可以直接粘贴（Ctrl+V）</p>
+              <p class="dropzone-formats" data-i18n="home.formats">支持 PNG、JPG、WebP，最大 20 MB</p>
+            </div>
+            <div class="samples">
+              <button type="button" class="sample-chip" data-sample><img src="/static/img/coffee.webp" alt="" width="28" height="28"><span data-i18n="tool.sample">用示例图片试试</span></button>
+            </div>
+          </div>
+          <div class="editor" data-editor hidden>
+            <canvas class="layer-base" data-base></canvas>
+            <canvas class="layer-paint" data-paint aria-label="涂抹区域" data-i18n-attr="aria-label:erase.canvas_label"></canvas>
+            <div class="brush-cursor" data-cursor hidden></div>
+          </div>
+        </div>
+      </div>
+      <aside class="panel" aria-labelledby="erase-panel-title">
+        <h2 class="visually-hidden" id="erase-panel-title" data-i18n="tool.panel">设置与导出</h2>
+        <div class="panel-section">
+          <div class="status" data-status aria-live="polite"><svg class="icon" aria-hidden="true"><use href="#i-info"/></svg><span data-i18n="erase.idle">选择图片，然后用画笔涂掉要去掉的东西。</span></div>
+          <p class="meta num" data-meta hidden></p>
+        </div>
+        <div class="panel-section panel-actions">
+          <button type="button" class="btn btn-primary btn-lg btn-block" data-run disabled><svg class="icon" aria-hidden="true"><use href="#i-erase"/></svg><span data-i18n="erase.run">开始消除</span></button>
+          <button type="button" class="btn btn-block" data-compare disabled><svg class="icon" aria-hidden="true"><use href="#i-eye"/></svg><span data-i18n="erase.compare">按住对比原图</span></button>
+          <button type="button" class="btn btn-quiet btn-block" data-revert disabled><svg class="icon" aria-hidden="true"><use href="#i-undo"/></svg><span data-i18n="erase.revert">撤销上一次消除</span></button>
+        </div>
+        <div class="panel-section panel-actions">
+          <button type="button" class="btn btn-block" data-download disabled><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span data-i18n="tool.download">下载</span></button>
+          <div class="panel-row">
+            <button type="button" class="btn" data-to-cutout disabled><svg class="icon" aria-hidden="true"><use href="#i-cutout"/></svg><span data-i18n="erase.to_cutout">接着去抠图</span></button>
+            <button type="button" class="btn" data-browse><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg><span data-i18n="tool.new">换一张图片</span></button>
+          </div>
+        </div>
+        <div class="panel-notes">
+          <p class="fineprint" data-i18n="erase.tip">盖住整个物体并多涂一圈，效果更好。</p>
+          <p class="fineprint shortcuts">
+            <span><kbd>[</kbd> <kbd>]</kbd> <span data-i18n="erase.key_brush">画笔大小</span></span>
+            <span><kbd>Ctrl</kbd> <kbd>Z</kbd> <span data-i18n="erase.key_undo">撤销</span></span>
+            <span><kbd>Enter</kbd> <span data-i18n="erase.key_run">开始消除</span></span>
+          </p>
+        </div>
+      </aside>
+    </div>
+    <input type="file" accept="image/png,image/jpeg,image/webp" hidden data-file>
+  </section>
+
+  <!-- ── Heatmap ──────────────────────────────────────────────────────────── -->
+  <section class="view tool" data-view="heatmap" hidden>
+    <header class="tool-head">
+      <h1 tabindex="-1" data-i18n="heatmap.h1">注意力热力图</h1>
+      <p data-i18n="heatmap.lead">上传界面截图，预测用户的视线会落在哪里；框出标题、按钮等区域，看它们各分到多少注意力，或者对比两个版本。</p>
+    </header>
+    <div class="workspace">
+      <div class="tool-main">
+        <div class="notice-slot"></div>
+        <div class="stage is-empty" data-stage>
+          <div class="empty" data-empty>
+            <div class="drop-prompt">
+              <svg class="icon icon-lg" aria-hidden="true"><use href="#i-image"/></svg>
+              <button type="button" class="btn btn-primary btn-lg" data-browse="a"><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg><span data-i18n="heatmap.upload">上传截图</span></button>
+              <p class="dropzone-hint" data-i18n="home.drop_hint">或把图片拖到这里，也可以直接粘贴（Ctrl+V）</p>
+              <p class="dropzone-formats" data-i18n="home.formats">支持 PNG、JPG、WebP，最大 20 MB</p>
+            </div>
+            <div class="samples">
+              <button type="button" class="sample-chip" data-sample><img src="/static/img/samples/shop-a.webp" alt="" width="28" height="28"><span data-i18n="heatmap.sample">用示例截图试试</span></button>
+            </div>
+          </div>
+          <div class="shots" data-shots hidden></div>
+        </div>
+      </div>
+      <aside class="panel" aria-labelledby="heatmap-panel-title">
+        <h2 class="visually-hidden" id="heatmap-panel-title" data-i18n="tool.panel">设置与导出</h2>
+        <div class="panel-section">
+          <div class="status" data-status aria-live="polite"><svg class="icon" aria-hidden="true"><use href="#i-info"/></svg><span data-i18n="heatmap.idle">上传一张界面截图开始。</span></div>
+          <p class="meta num" data-meta hidden></p>
+        </div>
+        <div class="panel-section panel-actions">
+          <button type="button" class="btn btn-primary btn-lg btn-block" data-run disabled><svg class="icon" aria-hidden="true"><use href="#i-focus"/></svg><span data-run-label data-i18n="heatmap.run">开始分析</span></button>
+          <div class="panel-row">
+            <button type="button" class="btn" data-browse="a"><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg><span data-i18n="tool.new">换一张图片</span></button>
+            <button type="button" class="btn" data-sample><svg class="icon" aria-hidden="true"><use href="#i-image"/></svg><span data-i18n="heatmap.sample_short">示例</span></button>
+          </div>
+        </div>
+        <div class="panel-section">
+          <span class="field-label" id="heatmap-mode-label" data-i18n="heatmap.mode_label">模式</span>
+          <div class="segmented segmented-block" role="tablist" aria-labelledby="heatmap-mode-label">
+            <button type="button" role="tab" aria-selected="true" data-mode="score" data-i18n="heatmap.mode_score">分析一张</button>
+            <button type="button" role="tab" aria-selected="false" tabindex="-1" data-mode="compare" data-i18n="heatmap.mode_compare">对比 A / B</button>
+          </div>
+        </div>
+        <div class="panel-section">
+          <span class="field-label" data-i18n="heatmap.regions">要统计的区域</span>
+          <p class="help" data-regions-empty data-i18n="heatmap.regions_empty">在截图上按住拖动，框出标题、按钮等区域。不框也可以，会给出整张图的焦点。</p>
+          <ol class="region-list" data-region-list hidden></ol>
+          <details class="advanced">
+            <summary data-i18n="heatmap.regions_advanced">按坐标输入</summary>
+            <label class="field">
+              <span class="visually-hidden" data-i18n="heatmap.regions_advanced">按坐标输入</span>
+              <textarea name="regions" rows="3" spellcheck="false" autocomplete="off" placeholder="标题:140,120,300,60&#10;按钮:0.35,0.55,0.3,0.12f"></textarea>
+              <small data-regions-help data-i18n="heatmap.regions_help">每行一个：名称:x,y,宽,高（像素），或在比例坐标末尾加 f。会和框出的区域一起统计。</small>
+            </label>
+          </details>
+        </div>
+        <div class="panel-section" data-view-options hidden>
+          <span class="field-label" id="heatmap-show-label" data-i18n="heatmap.show">显示</span>
+          <div class="segmented segmented-block" role="group" aria-labelledby="heatmap-show-label">
+            <button type="button" aria-pressed="true" data-show="overlay" data-i18n="res.show_overlay">热力图</button>
+            <button type="button" aria-pressed="false" data-show="original" data-i18n="res.show_original">原图</button>
+          </div>
+          <label class="check"><input type="checkbox" name="marks" checked><span data-i18n="res.marks">显示区域和焦点</span></label>
+        </div>
+        <details class="panel-section advanced">
+          <summary data-i18n="heatmap.settings">分析设置</summary>
+          <div class="settings">
+            <label class="field">
+              <span data-i18n="heatmap.backend">模型</span>
+              <select name="backend">
+                <option value="fast" data-i18n="heatmap.backend_fast">快速（启发式）</option>
+                <option value="deep" data-i18n="heatmap.backend_deep">深度（UNISAL）</option>
+              </select>
+            </label>
+            <label class="field">
+              <span data-i18n="heatmap.colormap">色表</span>
+              <select name="colormap">
+                <option value="jet">Jet</option>
+                <option value="turbo">Turbo</option>
+              </select>
+            </label>
+            <label class="field">
+              <span><span data-i18n="heatmap.opacity">热力图浓度</span> <output class="num" data-alpha-out>0.60</output></span>
+              <input type="range" name="alpha" min="0.2" max="1" step="0.05" value="0.6">
+            </label>
+            <label class="check">
+              <input type="checkbox" name="faces">
+              <span><span data-i18n="heatmap.faces">人脸层</span><br><small class="help" data-i18n="heatmap.faces_help">检测到人脸的地方加强关注度</small></span>
+            </label>
+          </div>
+        </details>
+      </aside>
+    </div>
+    <section class="results" data-results hidden aria-labelledby="heatmap-results-title">
+      <div class="results-head">
+        <h2 id="heatmap-results-title" data-i18n="res.title">分析结果</h2>
+        <p class="meta num" data-results-meta></p>
+      </div>
+      <div class="results-body" data-results-body></div>
+    </section>
+    <input type="file" accept="image/png,image/jpeg,image/webp" hidden data-file>
+  </section>
+
 </main>
 
-<footer class="wrap" id="footer">
-  Images are processed in memory and deleted after each request. HotGaze is MIT-licensed — predictions come from
-  computer-vision priors, not real eye tracking.
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <div>
+      <a class="brand" href="/" data-link aria-label="焦点 Focal">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <rect width="32" height="32" rx="9" fill="#1f4fe0"/>
+          <path d="M9 13.5v-3A1.5 1.5 0 0 1 10.5 9h3M18.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3M23 18.5v3a1.5 1.5 0 0 1-1.5 1.5h-3M13.5 23h-3A1.5 1.5 0 0 1 9 21.5v-3" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3" fill="#fff"/>
+        </svg>
+        <span class="brand-name">焦点</span>
+        <span class="brand-latin">Focal</span>
+      </a>
+      <p class="footer-note" data-i18n="footer.about">免费的在线图片工具。图片只在处理时停留在服务器内存里，处理完立即删除。</p>
+      <p class="footer-note" data-i18n="footer.noncommercial">本站为非商业用途。</p>
+    </div>
+    <div>
+      <h2 data-i18n="footer.credits">开源项目与许可</h2>
+      <ul>
+        <li><a href="https://github.com/suryakosaraju/hotgaze" data-i18n="footer.hotgaze">HotGaze：注意力预测（MIT）</a></li>
+        <li><a href="https://github.com/Sanster/IOPaint" data-i18n="footer.iopaint">IOPaint：消除与抠图服务（Apache-2.0）</a></li>
+        <li><a href="https://github.com/advimman/lama" data-i18n="footer.lama">LaMa：涂抹消除模型（Apache-2.0）</a></li>
+        <li><a href="https://huggingface.co/briaai/RMBG-1.4" data-i18n="footer.rmbg">BRIA RMBG-1.4：抠图模型，仅限非商业使用</a></li>
+        <li data-i18n="footer.samples">示例图片：NASA（公有领域）、克利夫兰艺术博物馆开放资源（CC0）、Rachel Michetti（CC0）</li>
+        <li><a href="https://github.com/DietCokewithSugar/hotgaze" data-i18n="footer.source">源代码</a></li>
+      </ul>
+    </div>
+  </div>
 </footer>
-
-<script>
-(() => {
-  'use strict';
-
-  const $ = (selector, root = document) => root.querySelector(selector);
-  const form = $('#form');
-  const statusEl = $('#status');
-  const results = $('#results');
-  const runButton = $('#run');
-  const sampleButton = $('#sample');
-  const regionsInput = $('#regions');
-  const alphaInput = $('#alpha');
-
-  const SAMPLES = {
-    score: {
-      files: ['landing.png'],
-      regions: 'headline:140,120,300,60\ncta:250,200,200,35\nfeatures:100,300,600,85',
-    },
-    compare: {
-      files: ['landing.png', 'landing_variant.png'],
-      regions: 'cta_left:250,200,200,35\ncta_top_right:550,110,130,35\nheadline:140,120,300,60',
-    },
-  };
-
-  const state = { mode: 'score', files: { a: null, b: null }, maxUploadBytes: 20 * 1024 * 1024, busy: false };
-  let resultUrls = [];
-  let ticker = null;
-
-  // ── DOM helpers (all user-provided text goes through textContent) ──────────
-  function el(tag, props = {}, ...children) {
-    const node = document.createElement(tag);
-    for (const [key, value] of Object.entries(props)) {
-      if (value === undefined || value === null || value === false) continue;
-      if (key === 'class') node.className = value;
-      else if (key === 'text') node.textContent = value;
-      else if (key === 'style') Object.assign(node.style, value);
-      else if (key.startsWith('on')) node.addEventListener(key.slice(2), value);
-      else node.setAttribute(key, value === true ? '' : value);
-    }
-    node.append(...children.flat().filter((child) => child !== null && child !== undefined && child !== false));
-    return node;
-  }
-
-  const pct = (share) => `${(share * 100).toFixed(2)}%`;
-  const signed = (value, digits, unit) => `${value > 0 ? '+' : value < 0 ? '−' : '±'}${Math.abs(value).toFixed(digits)}${unit}`;
-  const pp = (delta) => signed(delta * 100, 2, ' pp');
-  const stem = (name) => name.replace(/\.[^.]+$/, '') || 'image';
-  const trend = (delta) => (delta > 1e-6 ? 'gain' : delta < -1e-6 ? 'loss' : '');
-
-  // ── Mode tabs ──────────────────────────────────────────────────────────────
-  function setMode(mode) {
-    state.mode = mode;
-    for (const tab of document.querySelectorAll('[role="tab"]')) {
-      tab.setAttribute('aria-selected', String(tab.dataset.mode === mode));
-    }
-    $('.drop[data-slot="b"]').hidden = mode !== 'compare';
-    const titleA = $('.drop[data-slot="a"] .drop-title');
-    titleA.textContent = mode === 'compare' ? titleA.dataset.titleCompare : titleA.dataset.titleScore;
-    $('#regions-help').firstChild.textContent = mode === 'compare'
-      ? 'Optional, applied to both images, one per line: '
-      : 'Optional, one per line: ';
-    runButton.textContent = mode === 'compare' ? 'Compare' : 'Run analysis';
-  }
-  for (const tab of document.querySelectorAll('[role="tab"]')) {
-    tab.addEventListener('click', () => setMode(tab.dataset.mode));
-  }
-
-  // ── File inputs with drag & drop ───────────────────────────────────────────
-  function setFile(slot, file) {
-    const drop = $(`.drop[data-slot="${slot}"]`);
-    const thumb = $('.thumb', drop);
-    if (thumb.dataset.url) URL.revokeObjectURL(thumb.dataset.url);
-    state.files[slot] = file;
-    if (!file) {
-      thumb.hidden = true;
-      $('.drop-file', drop).textContent = '';
-      return;
-    }
-    const url = URL.createObjectURL(file);
-    thumb.dataset.url = url;
-    thumb.src = url;
-    thumb.hidden = false;
-    $('.drop-file', drop).textContent = `${file.name} · ${(file.size / 1024).toFixed(0)} KB`;
-  }
-
-  for (const drop of document.querySelectorAll('.drop')) {
-    const slot = drop.dataset.slot;
-    const input = $('input', drop);
-    input.addEventListener('change', () => input.files[0] && setFile(slot, input.files[0]));
-    drop.addEventListener('dragover', (event) => { event.preventDefault(); drop.classList.add('over'); });
-    drop.addEventListener('dragleave', () => drop.classList.remove('over'));
-    drop.addEventListener('drop', (event) => {
-      event.preventDefault();
-      drop.classList.remove('over');
-      const file = event.dataTransfer.files[0];
-      if (file) setFile(slot, file);
-    });
-  }
-
-  alphaInput.addEventListener('input', () => { $('#alpha-out').value = Number(alphaInput.value).toFixed(2); });
-
-  // ── Status line ────────────────────────────────────────────────────────────
-  function setStatus(text, isError = false) {
-    statusEl.classList.toggle('error', isError);
-    statusEl.replaceChildren(text);
-  }
-
-  function setBusy(busy) {
-    state.busy = busy;
-    runButton.disabled = busy;
-    sampleButton.disabled = busy;
-    clearInterval(ticker);
-    if (!busy) return;
-    const started = performance.now();
-    const tick = () => {
-      const seconds = Math.round((performance.now() - started) / 1000);
-      const note = seconds >= 6
-        ? ' — small instances (e.g. Render free, 0.1 CPU) can take 10–40 s, and the first request after idling waits for the server to wake.'
-        : '';
-      statusEl.classList.remove('error');
-      statusEl.replaceChildren(el('span', { class: 'spinner', 'aria-hidden': 'true' }), `Analyzing… ${seconds} s${note}`);
-    };
-    tick();
-    ticker = setInterval(tick, 1000);
-  }
-
-  function errorMessage(response, body) {
-    const detail = body && body.detail;
-    if (typeof detail === 'string') return detail;
-    if (Array.isArray(detail)) {
-      return detail.map((item) => `${(item.loc || []).slice(1).join('.') || 'request'}: ${item.msg}`).join('; ');
-    }
-    return `Request failed: ${response.status} ${response.statusText}`.trim();
-  }
-
-  // ── Server info ────────────────────────────────────────────────────────────
-  async function loadInfo() {
-    try {
-      const response = await fetch('/api/info');
-      const info = await response.json();
-      $('#version').textContent = `v${info.version}`;
-      state.maxUploadBytes = info.limits.max_upload_bytes;
-      const deep = $('#backend option[value="deep"]');
-      if (!info.backends.includes('deep')) {
-        deep.disabled = true;
-        deep.textContent += ' (not installed)';
-      }
-      sampleButton.hidden = info.samples.length === 0;
-      $('#footer').prepend(
-        `Limits: ${(info.limits.max_pixels / 1e6).toFixed(0)} MP and ${(info.limits.max_upload_bytes / 1048576).toFixed(0)} MB per image. `,
-      );
-    } catch (error) {
-      setStatus(`Could not reach the server: ${error.message}`, true);
-    }
-  }
-
-  // ── Submit ─────────────────────────────────────────────────────────────────
-  async function run() {
-    if (state.busy) return;
-    const mode = state.mode;
-    const slots = mode === 'compare' ? ['a', 'b'] : ['a'];
-    for (const slot of slots) {
-      const file = state.files[slot];
-      if (!file) {
-        setStatus(mode === 'compare' ? `Choose screenshot ${slot.toUpperCase()} first.` : 'Choose a screenshot first.', true);
-        return;
-      }
-      if (file.size > state.maxUploadBytes) {
-        setStatus(`${file.name} is larger than ${(state.maxUploadBytes / 1048576).toFixed(0)} MB.`, true);
-        return;
-      }
-    }
-
-    const data = new FormData();
-    if (mode === 'compare') {
-      data.append('image_a', state.files.a);
-      data.append('image_b', state.files.b);
-    } else {
-      data.append('image', state.files.a);
-    }
-    for (const line of regionsInput.value.split('\n')) {
-      if (line.trim()) data.append('region', line.trim());
-    }
-    data.append('backend', $('#backend').value);
-    data.append('colormap', $('#colormap').value);
-    data.append('alpha', alphaInput.value);
-    data.append('faces', $('#faces').checked ? 'true' : 'false');
-    const files = { a: state.files.a, b: state.files.b };
-
-    setBusy(true);
-    try {
-      const response = await fetch(`/api/${mode}`, { method: 'POST', body: data });
-      const body = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(errorMessage(response, body));
-      if (mode === 'compare') renderCompare(body, files);
-      else renderScore(body, files.a);
-      setBusy(false);
-      setStatus(`Done — analysis took ${body.elapsed_seconds.toFixed(1)} s.`);
-      results.firstElementChild.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } catch (error) {
-      setBusy(false);
-      setStatus(error.message, true);
-    }
-  }
-
-  form.addEventListener('submit', (event) => { event.preventDefault(); run(); });
-
-  sampleButton.addEventListener('click', async () => {
-    const sample = SAMPLES[state.mode];
-    try {
-      const files = await Promise.all(sample.files.map(async (name) => {
-        const response = await fetch(`/samples/${name}`);
-        if (!response.ok) throw new Error(`Could not load sample ${name}`);
-        return new File([await response.blob()], name, { type: 'image/png' });
-      }));
-      setFile('a', files[0]);
-      if (files[1]) setFile('b', files[1]);
-      regionsInput.value = sample.regions;
-      run();
-    } catch (error) {
-      setStatus(error.message, true);
-    }
-  });
-
-  // ── Rendering ──────────────────────────────────────────────────────────────
-  function objectUrl(file) {
-    const url = URL.createObjectURL(file);
-    resultUrls.push(url);
-    return url;
-  }
-
-  function resetResults() {
-    for (const url of resultUrls) URL.revokeObjectURL(url);
-    resultUrls = [];
-  }
-
-  function figure(title, overlay, file, doc) {
-    const { width, height } = doc.image.size;
-    const original = objectUrl(file);
-    const img = el('img', { src: overlay, alt: `${title}: attention overlay`, width, height });
-    const at = (x, y) => ({ left: `${(x / width) * 100}%`, top: `${(y / height) * 100}%` });
-    const marks = el('div', { class: 'marks' },
-      doc.regions.map((region) => el('div', {
-        class: 'box',
-        style: { ...at(region.box.x, region.box.y), width: `${(region.box.w / width) * 100}%`, height: `${(region.box.h / height) * 100}%` },
-      }, el('span', {
-        // Boxes touching the top edge get their label inside, where it cannot be clipped.
-        class: region.box.y < height * 0.04 ? 'tag inside' : 'tag',
-        text: `${region.name} · ${pct(region.share)}`,
-      }))),
-      doc.focal_points.map((point) => el('div', {
-        class: 'focal', style: at(point.x, point.y), title: `Focal point #${point.rank} (value ${point.value.toFixed(3)})`, text: String(point.rank),
-      })),
-    );
-
-    const toggle = el('button', { type: 'button', class: 'mini', 'aria-pressed': 'false', text: 'Show original' });
-    toggle.addEventListener('click', () => {
-      const showingOriginal = toggle.getAttribute('aria-pressed') === 'true';
-      img.src = showingOriginal ? overlay : original;
-      toggle.setAttribute('aria-pressed', String(!showingOriginal));
-      toggle.textContent = showingOriginal ? 'Show original' : 'Show heatmap';
-    });
-    const marksToggle = el('input', { type: 'checkbox', checked: true });
-    marksToggle.addEventListener('change', () => { marks.hidden = !marksToggle.checked; });
-
-    return el('figure', {},
-      el('figcaption', {}, el('strong', { text: title }), el('span', { class: 'meta', text: `${doc.image.path} · ${width}×${height}` })),
-      el('div', { class: 'scroller' }, el('div', { class: 'stage' }, img, marks)),
-      el('div', { class: 'fig-tools' },
-        toggle,
-        el('label', {}, marksToggle, 'Regions & focal points'),
-        el('a', { class: 'mini', href: overlay, download: `${stem(doc.image.path)}_overlay.jpg`, text: 'Download overlay' }),
-      ),
-    );
-  }
-
-  function table(caption, headers, rows, note) {
-    if (!rows.length) {
-      return el('div', {}, el('p', { class: 'empty' }, el('strong', { text: caption }), ` — ${note}`));
-    }
-    return el('div', { class: 'table-wrap' },
-      el('table', {},
-        el('caption', {}, caption),
-        el('thead', {}, el('tr', {}, headers.map(([label, cls]) => el('th', { class: cls, scope: 'col', text: label })))),
-        el('tbody', {}, rows.map((cells) => el('tr', {}, cells))),
-      ),
-    );
-  }
-
-  function regionTable(doc) {
-    const top = Math.max(...doc.regions.map((region) => region.share), 1e-9);
-    return table('Regions', [['#', 'num'], ['Region'], ['Attention share', 'num'], ['Peak', 'num'], ['Box (x, y, w, h)', 'col-box']],
-      doc.regions.map((region) => [
-        el('td', { class: 'num', text: String(region.rank) }),
-        el('td', { class: 'name', text: region.name }),
-        el('td', { class: 'num' }, pct(region.share), el('span', { class: 'bar', style: { width: `${Math.max(2, (region.share / top) * 60)}px` } })),
-        el('td', { class: 'num', text: region.peak_value.toFixed(3) }),
-        el('td', { class: 'col-box', text: `${region.box.x}, ${region.box.y}, ${region.box.w}, ${region.box.h}` }),
-      ]),
-      'add regions above to get their attention share.');
-  }
-
-  function focalTable(doc, caption = 'Focal points') {
-    return table(caption, [['#', 'num'], ['x', 'num'], ['y', 'num'], ['Value', 'num']],
-      doc.focal_points.map((point) => [
-        el('td', { class: 'num', text: String(point.rank) }),
-        el('td', { class: 'num', text: String(point.x) }),
-        el('td', { class: 'num', text: String(point.y) }),
-        el('td', { class: 'num', text: point.value.toFixed(3) }),
-      ]),
-      'none found.');
-  }
-
-  function jsonBlock(title, doc, filename) {
-    const text = JSON.stringify(doc, null, 2);
-    const copy = el('button', { type: 'button', class: 'mini', text: 'Copy' });
-    copy.addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(text);
-        copy.textContent = 'Copied';
-      } catch {
-        copy.textContent = 'Copy failed';
-      }
-      setTimeout(() => { copy.textContent = 'Copy'; }, 1500);
-    });
-    const href = URL.createObjectURL(new Blob([text + '\n'], { type: 'application/json' }));
-    resultUrls.push(href);
-    return el('details', { class: 'json' },
-      el('summary', { text: title }),
-      el('div', { class: 'json-tools' }, copy, el('a', { class: 'mini', href, download: filename, text: `Download ${filename}` })),
-      el('pre', { text }),
-    );
-  }
-
-  function resultCard(title, meta, ...body) {
-    return el('section', { class: 'card' },
-      el('div', { class: 'result-head' }, el('h2', { text: title }), el('span', { class: 'meta', text: meta })),
-      el('div', { class: 'result-body' }, ...body),
-    );
-  }
-
-  function runMeta(doc, elapsed) {
-    const layers = doc.config.extra_layers.length ? ` + ${doc.config.extra_layers.join(', ')}` : '';
-    const work = doc.image.working_size;
-    return `${doc.config.backend} backend${layers} · working size ${work.width}×${work.height} · ${elapsed.toFixed(1)} s`;
-  }
-
-  function renderScore(body, file) {
-    resetResults();
-    const doc = body.score;
-    results.replaceChildren(resultCard(
-      doc.image.path,
-      runMeta(doc, body.elapsed_seconds),
-      el('div', { class: 'figs' }, figure('Attention overlay', body.overlay, file, doc)),
-      el('div', { class: 'tables' }, regionTable(doc), focalTable(doc)),
-      jsonBlock('Score JSON (schema v1, same as hotgaze score --json)', doc, `${stem(doc.image.path)}_score.json`),
-    ));
-  }
-
-  function deltaTable(compare) {
-    return table('Attention share by region', [['Region'], ['A', 'num'], ['B', 'num'], ['Δ B − A', 'num'], ['Relative', 'num']],
-      compare.per_region_deltas.map((row) => {
-        const relative = row.share_a > 0 ? signed((row.delta / row.share_a) * 100, 0, '%') : '—';
-        return [
-          el('td', { class: 'name', text: row.name }),
-          el('td', { class: 'num', text: pct(row.share_a) }),
-          el('td', { class: 'num', text: pct(row.share_b) }),
-          el('td', { class: `num ${trend(row.delta)}`, text: pp(row.delta) }),
-          el('td', { class: `num ${trend(row.delta)}`, text: relative }),
-        ];
-      }),
-      'no regions.');
-  }
-
-  function gridView(grid) {
-    const peak = Math.max(...grid.map(Math.abs), 1e-9);
-    const shade = (value) => {
-      const rgb = value >= 0 ? 'var(--gain-rgb)' : 'var(--loss-rgb)';
-      return `rgba(${rgb}, ${(0.08 + (Math.abs(value) / peak) * 0.5).toFixed(3)})`;
-    };
-    return el('div', {},
-      el('p', { class: 'empty' }, el('strong', { text: '3×3 attention-share deltas' }), ' — B − A per ninth of the image; green means B draws more attention there.'),
-      el('div', { class: 'grid9', role: 'img', 'aria-label': 'Three by three grid of attention-share deltas' },
-        grid.map((value) => el('div', { class: trend(value), style: { background: shade(value) }, text: pp(value) }))),
-    );
-  }
-
-  function movementTable(compare) {
-    const xy = (x, y) => (x < 0 ? '—' : `${x}, ${y}`);
-    return table('Focal-point movement', [['#', 'num'], ['A (x, y)', 'num'], ['B (x, y)', 'num'], ['Moved', 'num']],
-      compare.focal_point_movement.map((row) => [
-        el('td', { class: 'num', text: String(row.rank) }),
-        el('td', { class: 'num', text: xy(row.x_a, row.y_a) }),
-        el('td', { class: 'num', text: xy(row.x_b, row.y_b) }),
-        el('td', { class: 'num', text: row.distance < 0 ? '—' : `${row.distance.toFixed(0)} px` }),
-      ]),
-      'none found.');
-  }
-
-  function renderCompare(body, files) {
-    resetResults();
-    const compare = body.compare.compare;
-    const hasRegions = compare.per_region_deltas.length > 0;
-    results.replaceChildren(resultCard(
-      `${body.score_a.image.path} → ${body.score_b.image.path}`,
-      runMeta(body.score_a, body.elapsed_seconds),
-      el('div', { class: 'figs' },
-        figure('A · baseline', body.overlay_a, files.a, body.score_a),
-        figure('B · candidate', body.overlay_b, files.b, body.score_b)),
-      hasRegions
-        ? el('div', { class: 'tables' }, deltaTable(compare))
-        : el('div', { class: 'tables' }, gridView(compare.grid_deltas), movementTable(compare)),
-      el('p', { class: 'hint' }, hasRegions
-        ? 'Δ is the change in each region’s share of total attention, in percentage points; Relative is that change as a fraction of A’s share.'
-        : 'Add regions to get per-region deltas — fractional regions (…f) also work when A and B have different sizes.'),
-      jsonBlock('Compare JSON (schema v1, same as hotgaze compare --json)', body.compare, 'compare.json'),
-    ));
-  }
-
-  setMode('score');
-  loadInfo();
-})();
-</script>
 </body>
 </html>

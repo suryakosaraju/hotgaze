@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>示例店铺</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; width: 1280px; height: 800px; overflow: hidden; background: #fff; color: #1f2328;
+         font-family: "Noto Sans CJK SC", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; }
+  header { height: 68px; display: flex; align-items: center; gap: 44px; padding: 0 64px; border-bottom: 1px solid #ececec; }
+  .logo { font-size: 22px; font-weight: 700; letter-spacing: 3px; color: #2d4a3b; }
+  nav { display: flex; gap: 30px; font-size: 15px; color: #555; }
+  nav span.on { color: #1f2328; font-weight: 600; }
+  .tools { margin-left: auto; display: flex; gap: 26px; font-size: 14px; color: #555; }
+  .tools b { display: inline-block; min-width: 18px; padding: 0 5px; margin-left: 4px; border-radius: 9px; background: #2d4a3b; color: #fff; font-size: 12px; text-align: center; }
+  main { display: grid; grid-template-columns: 560px 1fr; gap: 60px; padding: 34px 64px 0; }
+  .photo { position: relative; width: 560px; height: 560px; border-radius: 10px; background: #f6f6f4; display: grid; place-items: center; overflow: hidden; }
+  .photo img { width: 470px; height: 470px; object-fit: contain; mix-blend-mode: multiply; }
+  .thumbs { display: flex; gap: 12px; margin-top: 14px; }
+  .thumbs i { width: 72px; height: 72px; border-radius: 8px; background-color: #f6f6f4; background-repeat: no-repeat; background-position: center; border: 1px solid #e8e8e4; background-blend-mode: multiply; }
+  .thumbs i:first-child { border: 2px solid #2d4a3b; }
+  .crumbs { font-size: 13px; color: #8a8f98; }
+  h1 { margin: 14px 0 10px; font-size: 36px; line-height: 1.3; font-weight: 700; letter-spacing: 1px; }
+  .sub { font-size: 16px; color: #5d636d; line-height: 1.7; }
+  .rating { margin-top: 14px; font-size: 14px; color: #8a8f98; }
+  .rating em { font-style: normal; color: #b7791f; letter-spacing: 2px; margin-right: 8px; }
+  .price { margin-top: 26px; display: flex; align-items: baseline; gap: 14px; }
+  .price strong { font-size: 42px; color: #b3261e; font-weight: 700; }
+  .price s { font-size: 16px; color: #9aa0a8; }
+  .opts { margin-top: 22px; display: flex; align-items: center; gap: 12px; font-size: 14px; color: #5d636d; }
+  .opts span { padding: 8px 16px; border: 1px solid #d9dbe0; border-radius: 6px; color: #1f2328; }
+  .opts span.on { border-color: #2d4a3b; box-shadow: inset 0 0 0 1px #2d4a3b; }
+  .buy { margin-top: 30px; display: flex; gap: 14px; }
+  .buy div { display: grid; place-items: center; height: 56px; border-radius: 8px; font-size: 18px; font-weight: 600; }
+  .cta { width: 220px; background: #2d4a3b; color: #fff; }
+  .cart { width: 180px; border: 1.5px solid #2d4a3b; color: #2d4a3b; }
+  .trust { margin-top: 26px; display: flex; gap: 28px; font-size: 14px; color: #5d636d; }
+  .trust span::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 8px; border-radius: 50%; background: #2d4a3b; vertical-align: middle; }
+  .note { position: absolute; left: 64px; bottom: 18px; font-size: 12px; color: #a3a8b0; }
+  .badge { display: none; position: absolute; left: 28px; top: 28px; padding: 14px 22px; border-radius: 10px; background: #e0262b; color: #fff; font-size: 26px; font-weight: 700; letter-spacing: 1px; line-height: 1.2; }
+  .badge small { display: block; font-size: 15px; font-weight: 500; letter-spacing: 0; opacity: .92; }
+  body.b .badge { display: block; }
+</style>
+</head>
+<body>
+  <header>
+    <div class="logo">山间茶器</div>
+    <nav><span>首页</span><span class="on">茶壶</span><span>茶杯</span><span>茶盘</span><span>关于我们</span></nav>
+    <div class="tools"><span>搜索</span><span>登录</span><span>购物车<b>2</b></span></div>
+  </header>
+  <main>
+    <div>
+      <div class="photo" id="photo"><img src="../../web/static/img/teapot-white.webp" alt=""><div class="badge" id="badge">限时 8 折<small>今晚 24 点结束</small></div></div>
+      <div class="thumbs"><i style="background-image:url(../../web/static/img/teapot-white.webp);background-size:90%"></i><i style="background-image:url(../../web/static/img/teapot.webp);background-size:cover"></i><i style="background-image:url(../../web/static/img/teapot-white.webp);background-size:260%;background-position:46% 22%"></i><i style="background-image:url(../../web/static/img/teapot-white.webp);background-size:240%;background-position:88% 45%"></i></div>
+    </div>
+    <div>
+      <div class="crumbs">首页 / 茶壶 / 青花</div>
+      <h1 id="title">青花竹纹提梁壶</h1>
+      <p class="sub">手绘青花竹纹，铜制提梁。<br>容量 450 ml，适合 2–4 人泡茶。</p>
+      <div class="rating"><em>★★★★★</em>4.9 分 · 1,268 条评价</div>
+      <div class="price" id="price"><strong>¥368</strong><s>¥428</s></div>
+      <div class="opts">容量 <span>350 ml</span><span class="on">450 ml</span><span>600 ml</span></div>
+      <div class="buy"><div class="cta" id="cta">立即购买</div><div class="cart" id="cart">加入购物车</div></div>
+      <div class="trust"><span>48 小时发货</span><span>7 天无理由退换</span><span>顺丰包邮</span></div>
+    </div>
+  </main>
+  <div class="note">示例页面，商品与店铺均为虚构，仅用于演示注意力热力图。</div>
+</body>
+</html>

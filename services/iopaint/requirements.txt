@@ -1,0 +1,5 @@
+# IOPaint plus the packages its RemoveBG plugin imports. Every transitive version
+# is pinned in constraints.txt; torch comes from the CPU index (see Dockerfile).
+iopaint==1.6.0
+rembg==2.0.69
+onnxruntime==1.19.2

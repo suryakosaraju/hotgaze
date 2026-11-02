@@ -131,3 +131,44 @@ audit is conducted in T0.3 and will be appended below.
 |--------|-------|---------|--------|-------|
 | https://github.com/rdroste/unisal | `_unisal/_model.py`, `_unisal/_mobilenet.py`, `_unisal/_cgru.py` | Apache 2.0 | HEAD (2026-07-12) | Inference-only subset; training/dataset code removed. `_model.py` modified to remove training methods and KwConfigClass; `_mobilenet.py` and `_cgru.py` are unmodified except for the license header.
 | https://github.com/rdroste/unisal | `mobilenet_v2.pth.tar` (14,205,652 B, SHA-256 `ecbe2b56…`) | Apache 2.0 | Bundled in UNISAL repo | ImageNet-pretrained MobileNetV2 backbone. Bundled in UNISAL under same Apache 2.0 license; no separate NOTICE in the upstream. Redistribution: ✅ per Apache 2.0.
+
+## Web app (焦点 Focal, `web/`) and image service (`services/iopaint/`)
+
+The library above is unchanged; these are used only by the web app and its private
+image service.
+
+### Web app runtime
+
+| Package / asset | Version | URL | License | Notes |
+|---|---|---|---|---|
+| fastapi | 0.115+ | https://github.com/fastapi/fastapi | MIT | HTTP API and static files |
+| uvicorn | 0.30+ | https://github.com/encode/uvicorn | BSD-3-Clause | ASGI server |
+| python-multipart | 0.0.18+ | https://github.com/Kludex/python-multipart | Apache-2.0 | Upload parsing |
+| Figtree (Latin subset) | 1.x | https://github.com/erikdkennedy/figtree | SIL OFL 1.1 | `web/static/fonts/`, licence alongside in `Figtree-OFL.txt` |
+
+### IOPaint service (Docker image, not bundled in the repository)
+
+| Package / model | Version | URL | License | Notes |
+|---|---|---|---|---|
+| IOPaint | 1.6.0 | https://github.com/Sanster/IOPaint | Apache-2.0 | Request schemas, model code, image helpers; every transitive dependency pinned in `services/iopaint/constraints.txt` |
+| rembg | 2.0.69 | https://github.com/danielgatis/rembg | MIT | Imported by IOPaint's RemoveBG plugin |
+| onnxruntime | 1.19.2 | https://github.com/microsoft/onnxruntime | MIT | Imported by rembg |
+| torch / torchvision (CPU) | 2.15.0 / 0.29.2 | https://github.com/pytorch/pytorch | BSD-3-Clause | Model runtime |
+| LaMa (big-lama weights) | — | https://github.com/advimman/lama | Apache-2.0 | Erase; downloaded at image build time through IOPaint |
+| BRIA RMBG-1.4 weights | — | https://huggingface.co/briaai/RMBG-1.4 | bria-rmbg-1.4 (**non-commercial use only**) | Background removal; downloaded at image build time. The site states the restriction where the tool is used; commercial use needs a licence from BRIA or another model |
+
+### Sample images (`web/static/img/`)
+
+| Source | License | Notes |
+|---|---|---|
+| NASA JSC portrait S99-00858 (Eileen M. Collins) | Public domain (US government work) | `portrait*.webp` |
+| Cleveland Museum of Art Open Access, 2022.203 (*Teapot with Bamboo*) | CC0 | `teapot*.webp`, also inside the sample shop screenshots |
+| scikit-image `data.coffee` (Rachel Michetti) | CC0 | `coffee*.webp` |
+
+Every derived image is a real output of the tools; see `web/static/img/PROVENANCE.md`.
+
+### Development tooling
+
+| Tool | Version | URL | License | Notes |
+|---|---|---|---|---|
+| Impeccable (Claude Code skill and agents) | 4.8.0 | https://github.com/pbakaus/impeccable | Apache-2.0 | `.claude/skills/impeccable/`, `.claude/agents/impeccable-*.md`; design tooling only, not used at runtime. Its engine binary is fetched and checksum-verified on demand and is not committed |
