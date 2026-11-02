@@ -38,9 +38,37 @@ tests/fixtures/*.png
 src/hotgaze/_unisal/weights/
 *.pth.tar
 CLAUDE.md
-DESIGN.md
 PLAN.md
 PROGRESS.md
 CONTRIBUTING.md
 CONTRIBUTING.md
 docs/devlog*.md
+
+# Claude Code: personal settings (the impeccable design hooks live here) and the
+# impeccable engine binary, which the skill downloads and checksums on demand.
+.claude/settings.local.json
+.claude/skills/impeccable/scripts/bin/
+
+# impeccable-ignore-start
+# Ephemeral output, runtime state, and per-dev overrides.
+# The **/ prefix covers .impeccable at the repo root or in a nested workspace.
+# Shared artifacts stay tracked: config.json, live/config.json,
+# design.json, surfaces/*.md, critique/*.md.
+**/.impeccable/config.local.json
+**/.impeccable/hook.cache.json
+**/.impeccable/hook.pending.json
+**/.impeccable/*.png
+**/.impeccable/review/
+**/.impeccable/questions/
+**/.impeccable/live/server.json
+**/.impeccable/live/sessions/
+**/.impeccable/live/previews/
+**/.impeccable/live/annotations/
+**/.impeccable/live/cache/
+**/.impeccable/live/manual-edit-apply-transaction.json
+**/.impeccable/live/manual-edit-events.jsonl
+**/.impeccable/live/manual-edit-evidence/
+**/.impeccable/live/pending-manual-edits.json
+**/.impeccable/live/deferred-svelte-component-accepts.json
+**/.impeccable/live/*.png
+# impeccable-ignore-end

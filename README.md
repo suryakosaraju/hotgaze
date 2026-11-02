@@ -123,6 +123,15 @@ explicitly installs PyTorch and permits HotGaze's one-time checksummed UNISAL
 weight download. See the complete consumer workflow in
 [`.github/examples/hotgaze-consumer.yml`](.github/examples/hotgaze-consumer.yml).
 
+## Web app: 焦点 Focal
+
+[`web/`](web/) is **焦点 Focal**, a free online image tool site in Chinese and
+English built on this engine: an attention-heatmap page (upload a screenshot, draw
+the regions to measure, compare two versions), plus background removal and
+brush erase served by [IOPaint](https://github.com/Sanster/IOPaint) as a private
+service ([`services/iopaint/`](services/iopaint/)). The [`render.yaml`](render.yaml)
+Blueprint deploys both to Render — see [`web/README.md`](web/README.md).
+
 ## What's in the box
 
 - **CLI**: `hotgaze run`, `hotgaze score`, `hotgaze compare`, `hotgaze info`.

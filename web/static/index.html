@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>焦点 Focal · 免费在线抠图、消除与注意力热力图</title>
+  <meta name="description" content="免费在线抠图、涂抹消除和注意力热力图。上传图片，几秒钟得到透明背景 PNG；涂掉不想要的东西，背景自动补全。无需注册，图片处理完立即删除。">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="icon" href="/static/img/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="/static/fonts/figtree-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/static/img/portrait.webp" as="image">
+  <link rel="preload" href="/static/img/portrait-cutout.webp" as="image">
+  <link rel="stylesheet" href="/static/css/focal.css">
+  <script type="module" src="/static/js/app.js"></script>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15.5V4.5"/><path d="M7.5 9 12 4.5 16.5 9"/><path d="M4.5 15v3a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-3"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="m20.5 15.5-4.8-4.8L6.5 19.5"/></symbol>
+    <symbol id="i-cutout" viewBox="0 0 24 24"><circle cx="6.5" cy="6.5" r="2.8"/><circle cx="6.5" cy="17.5" r="2.8"/><path d="M8.6 8.4 19.5 19"/><path d="M8.6 15.6 19.5 5"/></symbol>
+    <symbol id="i-erase" viewBox="0 0 24 24"><path d="M8.5 20.5h12"/><path d="m3.9 15.2 9.3-9.3a2.2 2.2 0 0 1 3.1 0l3.3 3.3a2.2 2.2 0 0 1 0 3.1l-8.3 8.2H8.2l-4.3-4.2a.8.8 0 0 1 0-1.1Z"/><path d="m9.2 9.9 6.4 6.4"/></symbol>
+    <symbol id="i-focus" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="2.5"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17"/><path d="M12 3.5c2.4 2.3 3.6 5.1 3.6 8.5s-1.2 6.2-3.6 8.5c-2.4-2.3-3.6-5.1-3.6-8.5S9.6 5.8 12 3.5Z"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4.5v11"/><path d="M7.5 11 12 15.5 16.5 11"/><path d="M5 19.5h14"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2.2"/><path d="M15 5.5a1.5 1.5 0 0 0-1.5-1.5H6A2 2 0 0 0 4 6v7.5A1.5 1.5 0 0 0 5.5 15"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14.5 4.5 10 9 5.5"/><path d="M4.5 10H14a5.5 5.5 0 0 1 0 11h-3"/></symbol>
+    <symbol id="i-redo" viewBox="0 0 24 24"><path d="m15 14.5 4.5-4.5L15 5.5"/><path d="M19.5 10H10a5.5 5.5 0 0 0 0 11h3"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.5 7h15"/><path d="M9.5 7V4.5h5V7"/><path d="m6.5 7 .9 11.6a2 2 0 0 0 2 1.9h5.2a2 2 0 0 0 2-1.9L17.5 7"/><path d="M10.2 11v5.5M13.8 11v5.5"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="2.8"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.2"/><path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3"/></symbol>
+    <symbol id="i-badge" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="m8.3 12.3 2.6 2.6 4.9-5.4"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><path d="M8 7.5 3.5 12 8 16.5"/><path d="M16 7.5l4.5 4.5-4.5 4.5"/><path d="m13.6 4.5-3.2 15"/></symbol>
+    <symbol id="i-drag" viewBox="0 0 24 24"><path d="M9 7 4 12l5 5"/><path d="m15 7 5 5-5 5"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v5.5"/><path d="M12 16.4v.1"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><path d="M12 7.6v.1"/></symbol>
+    <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></symbol>
+    <symbol id="i-brush" viewBox="0 0 24 24"><path d="m14 4.5 5.5 5.5-7.8 7.8-5.5-5.5Z"/><path d="M6.2 12.3 4 14.5c-1 1-1 2.6 0 3.6l1.9 1.9c1 1 2.6 1 3.6 0l2.2-2.2"/></symbol>
+  </defs>
+</svg>
+
+<a class="skip-link" href="#main" data-i18n="skip">跳到主要内容</a>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <a class="brand" href="/" data-link aria-label="焦点 Focal">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+        <rect width="32" height="32" rx="9" fill="#1f4fe0"/>
+        <path d="M9 13.5v-3A1.5 1.5 0 0 1 10.5 9h3M18.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3M23 18.5v3a1.5 1.5 0 0 1-1.5 1.5h-3M13.5 23h-3A1.5 1.5 0 0 1 9 21.5v-3" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+        <circle cx="16" cy="16" r="3" fill="#fff"/>
+      </svg>
+      <span class="brand-name">焦点</span>
+      <span class="brand-latin">Focal</span>
+    </a>
+    <nav class="site-nav" aria-label="工具" data-i18n-attr="aria-label:nav.label">
+      <a href="/cutout" data-link data-route="cutout"><svg class="icon" aria-hidden="true"><use href="#i-cutout"/></svg><span data-i18n="nav.cutout">智能抠图</span></a>
+      <a href="/erase" data-link data-route="erase"><svg class="icon" aria-hidden="true"><use href="#i-erase"/></svg><span data-i18n="nav.erase">涂抹消除</span></a>
+      <a href="/heatmap" data-link data-route="heatmap"><svg class="icon" aria-hidden="true"><use href="#i-focus"/></svg><span data-i18n="nav.heatmap">注意力热力图</span></a>
+    </nav>
+    <button type="button" class="lang-toggle" id="lang-toggle" lang="en" aria-label="Switch to English" data-i18n-attr="aria-label:lang.toggle_label">
+      <svg class="icon" aria-hidden="true"><use href="#i-globe"/></svg><span data-i18n="lang.toggle">EN</span>
+    </button>
+  </div>
+</header>
+
+<main id="main" tabindex="-1">
+
+  <!-- ── Home ─────────────────────────────────────────────────────────────── -->
+  <section class="view" data-view="home" hidden>
+    <div class="hero">
+      <div class="hero-copy">
+        <h1 tabindex="-1"><span data-i18n="home.h1a">免费抠图、消除杂物，</span><br> <span data-i18n="home.h1b">还能预测用户先看哪里</span></h1>
+        <p class="lead" data-i18n="home.lead">上传一张图片，几秒钟得到透明背景 PNG；涂掉不想要的东西，背景自动补全。图片处理完立即删除，无需注册。</p>
+
+        <div class="dropzone hero-drop" id="home-drop">
+          <button type="button" class="btn btn-primary btn-lg" data-browse>
+            <svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg><span data-i18n="home.drop_title">上传图片</span>
+          </button>
+          <p class="dropzone-hint" data-i18n="home.drop_hint">或把图片拖到这里，也可以直接粘贴（Ctrl+V）</p>
+          <p class="dropzone-formats" data-i18n="home.formats">支持 PNG、JPG、WebP，最大 20 MB</p>
+          <input type="file" accept="image/png,image/jpeg,image/webp" hidden>
+        </div>
+
+        <div class="chooser" id="home-chooser" hidden>
+          <div class="chooser-head">
+            <div>
+              <p data-i18n="home.choose">要对这张图做什么？</p>
+              <small class="chooser-file"></small>
+            </div>
+          </div>
+          <div class="chooser-actions">
+            <button type="button" class="btn" data-tool="cutout"><svg class="icon" aria-hidden="true"><use href="#i-cutout"/></svg><span data-i18n="home.choose_cutout">抠图去背景</span></button>
+            <button type="button" class="btn" data-tool="erase"><svg class="icon" aria-hidden="true"><use href="#i-erase"/></svg><span data-i18n="home.choose_erase">涂抹消除</span></button>
+            <button type="button" class="btn" data-tool="heatmap"><svg class="icon" aria-hidden="true"><use href="#i-focus"/></svg><span data-i18n="home.choose_heatmap">注意力热力图</span></button>
+          </div>
+          <div><button type="button" class="btn btn-quiet btn-sm" data-reset><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg><span data-i18n="home.choose_other">换一张图</span></button></div>
+        </div>
+
+        <div class="samples hero-samples">
+          <span data-i18n="home.samples">没有图片？试试示例：</span>
+          <button type="button" class="sample-chip" data-sample="cutout"><img src="/static/img/portrait.webp" alt="" width="28" height="28"><span data-i18n="home.sample_cutout">人像抠图</span></button>
+          <button type="button" class="sample-chip" data-sample="erase"><img src="/static/img/coffee.webp" alt="" width="28" height="28"><span data-i18n="home.sample_erase">消除杂物</span></button>
+          <button type="button" class="sample-chip" data-sample="heatmap"><img src="/static/img/samples/shop-a.webp" alt="" width="28" height="28"><span data-i18n="home.sample_heatmap">网页热力图</span></button>
+        </div>
+      </div>
+
+      <div class="showcase">
+        <div class="showcase-bar">
+          <div class="segmented" role="tablist" aria-label="效果示例" data-i18n-attr="aria-label:showcase.label">
+            <button type="button" role="tab" aria-selected="true" aria-controls="showcase-stage" data-example="cutout" data-i18n="showcase.cutout">抠图</button>
+            <button type="button" role="tab" aria-selected="false" aria-controls="showcase-stage" data-example="erase" tabindex="-1" data-i18n="showcase.erase">消除</button>
+            <button type="button" role="tab" aria-selected="false" aria-controls="showcase-stage" data-example="heatmap" tabindex="-1" data-i18n="showcase.heatmap">热力图</button>
+          </div>
+          <p class="showcase-caption" data-i18n="showcase.hint">拖动中间的手柄，对比处理前后</p>
+        </div>
+        <div id="showcase-stage" role="tabpanel"></div>
+      </div>
+    </div>
+
+    <section class="promises" aria-label="承诺" data-i18n-attr="aria-label:promise.label">
+      <ul>
+        <li><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg><span data-i18n="promise.private">图片处理完立即删除</span></li>
+        <li><svg class="icon" aria-hidden="true"><use href="#i-badge"/></svg><span data-i18n="promise.free">免费，无需注册</span></li>
+        <li><svg class="icon" aria-hidden="true"><use href="#i-code"/></svg><span data-i18n="promise.open">基于开源模型</span></li>
+      </ul>
+    </section>
+
+    <div class="features">
+      <article class="feature">
+        <div class="feature-media">
+          <div class="pair">
+            <figure><img src="/static/img/teapot.webp" alt="深灰背景前的青花提梁茶壶" data-i18n-attr="alt:feature.cutout.alt_before" width="1000" height="1000" loading="lazy"><figcaption data-i18n="feature.before">原图</figcaption></figure>
+            <figure><img src="/static/img/teapot-white.webp" alt="同一把茶壶抠出后放在纯白背景上" data-i18n-attr="alt:feature.cutout.alt_after" width="1000" height="1000" loading="lazy"><figcaption data-i18n="feature.after_white">白底图</figcaption></figure>
+          </div>
+        </div>
+        <div class="feature-copy">
+          <h2 data-i18n="feature.cutout.title">一键抠图，导出透明 PNG</h2>
+          <p data-i18n="feature.cutout.body">自动识别人物、商品和动物，发丝这样的细节也能保留。抠好后可以换成白底、黑底或任意颜色再下载。</p>
+          <ul>
+            <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span data-i18n="feature.cutout.point1">大约 10 秒出结果</span></li>
+            <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span data-i18n="feature.cutout.point2">适合电商白底图、证件照和海报素材</span></li>
+          </ul>
+          <a class="btn btn-primary" href="/cutout" data-link><span data-i18n="feature.cutout.cta">开始抠图</span><svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+        </div>
+      </article>
+
+      <article class="feature">
+        <div class="feature-media">
+          <div class="pair">
+            <figure><img src="/static/img/coffee.webp" alt="咖啡杯旁有一把勺子" data-i18n-attr="alt:feature.erase.alt_before" width="600" height="400" loading="lazy"><figcaption data-i18n="feature.before">原图</figcaption></figure>
+            <figure><img src="/static/img/coffee-erased.webp" alt="勺子被消除后的咖啡杯" data-i18n-attr="alt:feature.erase.alt_after" width="600" height="400" loading="lazy"><figcaption data-i18n="feature.after">处理后</figcaption></figure>
+          </div>
+        </div>
+        <div class="feature-copy">
+          <h2 data-i18n="feature.erase.title">涂哪里，哪里就消失</h2>
+          <p data-i18n="feature.erase.body">用画笔涂掉路人、杂物、水印或文字，模型会根据周围的画面把背景补上。不满意可以撤销，接着再涂。</p>
+          <ul>
+            <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span data-i18n="feature.erase.point1">可以反复消除，直到满意</span></li>
+            <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span data-i18n="feature.erase.point2">支持撤销、重做和按住对比原图</span></li>
+          </ul>
+          <a class="btn btn-primary" href="/erase" data-link><span data-i18n="feature.erase.cta">开始消除</span><svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+        </div>
+      </article>
+
+      <article class="feature">
+        <div class="feature-media">
+          <div class="pair">
+            <figure class="focus-left"><img src="/static/img/shop-a-heatmap.webp" alt="商品页原版本的注意力热力图，标题、价格和购买按钮最热" data-i18n-attr="alt:feature.heatmap.alt_before" width="1280" height="800" loading="lazy"><figcaption data-i18n="cmp.a">A · 原版本</figcaption></figure>
+            <figure class="focus-left"><img src="/static/img/shop-b-heatmap.webp" alt="加了促销角标的新版本，角标分走了一部分注意力" data-i18n-attr="alt:feature.heatmap.alt_after" width="1280" height="800" loading="lazy"><figcaption data-i18n="cmp.b">B · 新版本</figcaption></figure>
+          </div>
+        </div>
+        <div class="feature-copy">
+          <h2 data-i18n="feature.heatmap.title">上线之前，先看用户会看哪里</h2>
+          <p data-i18n="feature.heatmap.body">上传界面截图，预测视线会落在哪里，并算出你标出的每个区域分到多少注意力；还能对比两个版本，看哪个更抓眼球。</p>
+          <ul>
+            <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span data-i18n="feature.heatmap.point1">给出数字，而不只是一张图</span></li>
+            <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span data-i18n="feature.heatmap.point2">支持两个版本 A/B 对比</span></li>
+          </ul>
+          <a class="btn btn-primary" href="/heatmap" data-link><span data-i18n="feature.heatmap.cta">分析截图</span><svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ── Cutout ───────────────────────────────────────────────────────────── -->
+  <section class="view tool" data-view="cutout" hidden>
+    <header class="tool-head">
+      <h1 tabindex="-1" data-i18n="cutout.h1">智能抠图</h1>
+      <p data-i18n="cutout.lead">自动去掉背景，导出透明 PNG。适合商品图、人像和海报素材。</p>
+    </header>
+    <div class="workspace">
+      <div class="tool-main">
+        <div class="notice-slot"></div>
+        <div class="stage is-empty" id="cutout-stage">
+          <div class="empty" data-empty>
+            <div class="drop-prompt">
+              <svg class="icon icon-lg" aria-hidden="true"><use href="#i-image"/></svg>
+              <button type="button" class="btn btn-primary btn-lg" data-browse><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg><span data-i18n="home.drop_title">上传图片</span></button>
+              <p class="dropzone-hint" data-i18n="home.drop_hint">或把图片拖到这里，也可以直接粘贴（Ctrl+V）</p>
+              <p class="dropzone-formats" data-i18n="home.formats">支持 PNG、JPG、WebP，最大 20 MB</p>
+            </div>
+            <div class="samples">
+              <span data-i18n="home.samples">没有图片？试试示例：</span>
+              <button type="button" class="sample-chip" data-sample="portrait"><img src="/static/img/portrait.webp" alt="" width="28" height="28"><span data-i18n="cutout.sample_portrait">人像</span></button>
+              <button type="button" class="sample-chip" data-sample="product"><img src="/static/img/teapot.webp" alt="" width="28" height="28"><span data-i18n="cutout.sample_product">商品</span></button>
+            </div>
+          </div>
+          <div class="result" data-result hidden></div>
+        </div>
+      </div>
+      <aside class="panel" aria-labelledby="cutout-panel-title">
+        <h2 class="visually-hidden" id="cutout-panel-title" data-i18n="tool.panel">设置与导出</h2>
+        <div class="panel-section">
+          <div class="status" data-status aria-live="polite"><svg class="icon" aria-hidden="true"><use href="#i-info"/></svg><span data-i18n="cutout.idle">选择图片后会自动开始抠图。</span></div>
+          <p class="meta num" data-meta hidden></p>
+        </div>
+        <div class="panel-section">
+          <span class="field-label" id="cutout-bg-label" data-i18n="cutout.background">背景</span>
+          <div class="swatches" role="group" aria-labelledby="cutout-bg-label">
+            <button type="button" class="swatch checker" data-bg="" aria-pressed="true" aria-label="透明" title="透明" data-i18n-attr="aria-label:cutout.bg_transparent;title:cutout.bg_transparent"></button>
+            <button type="button" class="swatch" data-bg="#ffffff" style="background:#ffffff" aria-pressed="false" aria-label="白色" title="白色" data-i18n-attr="aria-label:cutout.bg_white;title:cutout.bg_white"></button>
+            <button type="button" class="swatch" data-bg="#000000" style="background:#000000" aria-pressed="false" aria-label="黑色" title="黑色" data-i18n-attr="aria-label:cutout.bg_black;title:cutout.bg_black"></button>
+            <span class="swatch swatch-custom" data-bg-custom title="自定义颜色" data-i18n-attr="title:cutout.bg_custom"><input type="color" value="#1f4fe0" aria-label="自定义颜色" data-i18n-attr="aria-label:cutout.bg_custom"></span>
+          </div>
+        </div>
+        <div class="panel-section panel-actions">
+          <button type="button" class="btn btn-primary btn-lg btn-block" data-download disabled><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span data-i18n="tool.download_png">下载 PNG</span></button>
+          <div class="panel-row">
+            <button type="button" class="btn" data-copy disabled><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span data-i18n="tool.copy">复制图片</span></button>
+            <button type="button" class="btn" data-browse><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg><span data-i18n="tool.new">换一张图片</span></button>
+          </div>
+        </div>
+        <p class="fineprint" data-i18n="cutout.note">抠图模型 BRIA RMBG-1.4 仅限非商业使用。</p>
+      </aside>
+    </div>
+    <input type="file" accept="image/png,image/jpeg,image/webp" hidden data-file>
+  </section>
+
+  <!-- ── Erase ────────────────────────────────────────────────────────────── -->
+  <section class="view tool" data-view="erase" hidden>
+    <header class="tool-head">
+      <h1 tabindex="-1" data-i18n="erase.h1">涂抹消除</h1>
+      <p data-i18n="erase.lead">用画笔涂掉不想要的东西，背景会自动补全。</p>
+    </header>
+    <div class="workspace">
+      <div class="tool-main">
+        <div class="notice-slot"></div>
+        <div class="toolbar" data-toolbar hidden>
+          <div class="toolbar-group toolbar-brush">
+            <label>
+              <svg class="icon" aria-hidden="true"><use href="#i-brush"/></svg>
+              <span data-i18n="erase.brush">画笔大小</span>
+              <input type="range" min="8" max="160" step="2" value="48" data-brush>
+              <output class="num" data-brush-out>48</output>
+            </label>
+          </div>
+          <div class="toolbar-group">
+            <button type="button" class="icon-btn" data-undo disabled aria-label="撤销" title="撤销 (Ctrl+Z)" data-i18n-attr="aria-label:erase.undo;title:erase.undo_title"><svg class="icon" aria-hidden="true"><use href="#i-undo"/></svg></button>
+            <button type="button" class="icon-btn" data-redo disabled aria-label="重做" title="重做 (Ctrl+Shift+Z)" data-i18n-attr="aria-label:erase.redo;title:erase.redo_title"><svg class="icon" aria-hidden="true"><use href="#i-redo"/></svg></button>
+            <button type="button" class="icon-btn" data-clear disabled aria-label="清除涂抹" title="清除涂抹" data-i18n-attr="aria-label:erase.clear;title:erase.clear"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg></button>
+          </div>
+        </div>
+        <div class="stage is-empty" id="erase-stage">
+          <div class="empty" data-empty>
+            <div class="drop-prompt">
+              <svg class="icon icon-lg" aria-hidden="true"><use href="#i-image"/></svg>
+              <button type="button" class="btn btn-primary btn-lg" data-browse><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg><span data-i18n="home.drop_title">上传图片</span></button>
+              <p class="dropzone-hint" data-i18n="home.drop_hint">或把图片拖到这里，也可以直接粘贴（Ctrl+V）</p>
+              <p class="dropzone-formats" data-i18n="home.formats">支持 PNG、JPG、WebP，最大 20 MB</p>
+            </div>
+            <div class="samples">
+              <button type="button" class="sample-chip" data-sample><img src="/static/img/coffee.webp" alt="" width="28" height="28"><span data-i18n="tool.sample">用示例图片试试</span></button>
+            </div>
+          </div>
+          <div class="editor" data-editor hidden>
+            <canvas class="layer-base" data-base></canvas>
+            <canvas class="layer-paint" data-paint aria-label="涂抹区域" data-i18n-attr="aria-label:erase.canvas_label"></canvas>
+            <div class="brush-cursor" data-cursor hidden></div>
+          </div>
+        </div>
+      </div>
+      <aside class="panel" aria-labelledby="erase-panel-title">
+        <h2 class="visually-hidden" id="erase-panel-title" data-i18n="tool.panel">设置与导出</h2>
+        <div class="panel-section">
+          <div class="status" data-status aria-live="polite"><svg class="icon" aria-hidden="true"><use href="#i-info"/></svg><span data-i18n="erase.idle">选择图片，然后用画笔涂掉要去掉的东西。</span></div>
+          <p class="meta num" data-meta hidden></p>
+        </div>
+        <div class="panel-section panel-actions">
+          <button type="button" class="btn btn-primary btn-lg btn-block" data-run disabled><svg class="icon" aria-hidden="true"><use href="#i-erase"/></svg><span data-i18n="erase.run">开始消除</span></button>
+          <button type="button" class="btn btn-block" data-compare disabled><svg class="icon" aria-hidden="true"><use href="#i-eye"/></svg><span data-i18n="erase.compare">按住对比原图</span></button>
+          <button type="button" class="btn btn-quiet btn-block" data-revert disabled><svg class="icon" aria-hidden="true"><use href="#i-undo"/></svg><span data-i18n="erase.revert">撤销上一次消除</span></button>
+        </div>
+        <div class="panel-section panel-actions">
+          <button type="button" class="btn btn-block" data-download disabled><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span data-i18n="tool.download">下载</span></button>
+          <div class="panel-row">
+            <button type="button" class="btn" data-to-cutout disabled><svg class="icon" aria-hidden="true"><use href="#i-cutout"/></svg><span data-i18n="erase.to_cutout">接着去抠图</span></button>
+            <button type="button" class="btn" data-browse><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg><span data-i18n="tool.new">换一张图片</span></button>
+          </div>
+        </div>
+        <div class="panel-notes">
+          <p class="fineprint" data-i18n="erase.tip">盖住整个物体并多涂一圈，效果更好。</p>
+          <p class="fineprint shortcuts">
+            <span><kbd>[</kbd> <kbd>]</kbd> <span data-i18n="erase.key_brush">画笔大小</span></span>
+            <span><kbd>Ctrl</kbd> <kbd>Z</kbd> <span data-i18n="erase.key_undo">撤销</span></span>
+            <span><kbd>Enter</kbd> <span data-i18n="erase.key_run">开始消除</span></span>
+          </p>
+        </div>
+      </aside>
+    </div>
+    <input type="file" accept="image/png,image/jpeg,image/webp" hidden data-file>
+  </section>
+
+  <!-- ── Heatmap ──────────────────────────────────────────────────────────── -->
+  <section class="view tool" data-view="heatmap" hidden>
+    <header class="tool-head">
+      <h1 tabindex="-1" data-i18n="heatmap.h1">注意力热力图</h1>
+      <p data-i18n="heatmap.lead">上传界面截图，预测用户的视线会落在哪里；框出标题、按钮等区域，看它们各分到多少注意力，或者对比两个版本。</p>
+    </header>
+    <div class="workspace">
+      <div class="tool-main">
+        <div class="notice-slot"></div>
+        <div class="stage is-empty" data-stage>
+          <div class="empty" data-empty>
+            <div class="drop-prompt">
+              <svg class="icon icon-lg" aria-hidden="true"><use href="#i-image"/></svg>
+              <button type="button" class="btn btn-primary btn-lg" data-browse="a"><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg><span data-i18n="heatmap.upload">上传截图</span></button>
+              <p class="dropzone-hint" data-i18n="home.drop_hint">或把图片拖到这里，也可以直接粘贴（Ctrl+V）</p>
+              <p class="dropzone-formats" data-i18n="home.formats">支持 PNG、JPG、WebP，最大 20 MB</p>
+            </div>
+            <div class="samples">
+              <button type="button" class="sample-chip" data-sample><img src="/static/img/samples/shop-a.webp" alt="" width="28" height="28"><span data-i18n="heatmap.sample">用示例截图试试</span></button>
+            </div>
+          </div>
+          <div class="shots" data-shots hidden></div>
+        </div>
+      </div>
+      <aside class="panel" aria-labelledby="heatmap-panel-title">
+        <h2 class="visually-hidden" id="heatmap-panel-title" data-i18n="tool.panel">设置与导出</h2>
+        <div class="panel-section">
+          <div class="status" data-status aria-live="polite"><svg class="icon" aria-hidden="true"><use href="#i-info"/></svg><span data-i18n="heatmap.idle">上传一张界面截图开始。</span></div>
+          <p class="meta num" data-meta hidden></p>
+        </div>
+        <div class="panel-section panel-actions">
+          <button type="button" class="btn btn-primary btn-lg btn-block" data-run disabled><svg class="icon" aria-hidden="true"><use href="#i-focus"/></svg><span data-run-label data-i18n="heatmap.run">开始分析</span></button>
+          <div class="panel-row">
+            <button type="button" class="btn" data-browse="a"><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg><span data-i18n="tool.new">换一张图片</span></button>
+            <button type="button" class="btn" data-sample><svg class="icon" aria-hidden="true"><use href="#i-image"/></svg><span data-i18n="heatmap.sample_short">示例</span></button>
+          </div>
+        </div>
+        <div class="panel-section">
+          <span class="field-label" id="heatmap-mode-label" data-i18n="heatmap.mode_label">模式</span>
+          <div class="segmented segmented-block" role="tablist" aria-labelledby="heatmap-mode-label">
+            <button type="button" role="tab" aria-selected="true" data-mode="score" data-i18n="heatmap.mode_score">分析一张</button>
+            <button type="button" role="tab" aria-selected="false" tabindex="-1" data-mode="compare" data-i18n="heatmap.mode_compare">对比 A / B</button>
+          </div>
+        </div>
+        <div class="panel-section">
+          <span class="field-label" data-i18n="heatmap.regions">要统计的区域</span>
+          <p class="help" data-regions-empty data-i18n="heatmap.regions_empty">在截图上按住拖动，框出标题、按钮等区域。不框也可以，会给出整张图的焦点。</p>
+          <ol class="region-list" data-region-list hidden></ol>
+          <details class="advanced">
+            <summary data-i18n="heatmap.regions_advanced">按坐标输入</summary>
+            <label class="field">
+              <span class="visually-hidden" data-i18n="heatmap.regions_advanced">按坐标输入</span>
+              <textarea name="regions" rows="3" spellcheck="false" autocomplete="off" placeholder="标题:140,120,300,60&#10;按钮:0.35,0.55,0.3,0.12f"></textarea>
+              <small data-regions-help data-i18n="heatmap.regions_help">每行一个：名称:x,y,宽,高（像素），或在比例坐标末尾加 f。会和框出的区域一起统计。</small>
+            </label>
+          </details>
+        </div>
+        <div class="panel-section" data-view-options hidden>
+          <span class="field-label" id="heatmap-show-label" data-i18n="heatmap.show">显示</span>
+          <div class="segmented segmented-block" role="group" aria-labelledby="heatmap-show-label">
+            <button type="button" aria-pressed="true" data-show="overlay" data-i18n="res.show_overlay">热力图</button>
+            <button type="button" aria-pressed="false" data-show="original" data-i18n="res.show_original">原图</button>
+          </div>
+          <label class="check"><input type="checkbox" name="marks" checked><span data-i18n="res.marks">显示区域和焦点</span></label>
+        </div>
+        <details class="panel-section advanced">
+          <summary data-i18n="heatmap.settings">分析设置</summary>
+          <div class="settings">
+            <label class="field">
+              <span data-i18n="heatmap.backend">模型</span>
+              <select name="backend">
+                <option value="fast" data-i18n="heatmap.backend_fast">快速（启发式）</option>
+                <option value="deep" data-i18n="heatmap.backend_deep">深度（UNISAL）</option>
+              </select>
+            </label>
+            <label class="field">
+              <span data-i18n="heatmap.colormap">色表</span>
+              <select name="colormap">
+                <option value="jet">Jet</option>
+                <option value="turbo">Turbo</option>
+              </select>
+            </label>
+            <label class="field">
+              <span><span data-i18n="heatmap.opacity">热力图浓度</span> <output class="num" data-alpha-out>0.60</output></span>
+              <input type="range" name="alpha" min="0.2" max="1" step="0.05" value="0.6">
+            </label>
+            <label class="check">
+              <input type="checkbox" name="faces">
+              <span><span data-i18n="heatmap.faces">人脸层</span><br><small class="help" data-i18n="heatmap.faces_help">检测到人脸的地方加强关注度</small></span>
+            </label>
+          </div>
+        </details>
+      </aside>
+    </div>
+    <section class="results" data-results hidden aria-labelledby="heatmap-results-title">
+      <div class="results-head">
+        <h2 id="heatmap-results-title" data-i18n="res.title">分析结果</h2>
+        <p class="meta num" data-results-meta></p>
+      </div>
+      <div class="results-body" data-results-body></div>
+    </section>
+    <input type="file" accept="image/png,image/jpeg,image/webp" hidden data-file>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <div>
+      <a class="brand" href="/" data-link aria-label="焦点 Focal">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <rect width="32" height="32" rx="9" fill="#1f4fe0"/>
+          <path d="M9 13.5v-3A1.5 1.5 0 0 1 10.5 9h3M18.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3M23 18.5v3a1.5 1.5 0 0 1-1.5 1.5h-3M13.5 23h-3A1.5 1.5 0 0 1 9 21.5v-3" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3" fill="#fff"/>
+        </svg>
+        <span class="brand-name">焦点</span>
+        <span class="brand-latin">Focal</span>
+      </a>
+      <p class="footer-note" data-i18n="footer.about">免费的在线图片工具。图片只在处理时停留在服务器内存里，处理完立即删除。</p>
+      <p class="footer-note" data-i18n="footer.noncommercial">本站为非商业用途。</p>
+    </div>
+    <div>
+      <h2 data-i18n="footer.credits">开源项目与许可</h2>
+      <ul>
+        <li><a href="https://github.com/suryakosaraju/hotgaze" data-i18n="footer.hotgaze">HotGaze：注意力预测（MIT）</a></li>
+        <li><a href="https://github.com/Sanster/IOPaint" data-i18n="footer.iopaint">IOPaint：消除与抠图服务（Apache-2.0）</a></li>
+        <li><a href="https://github.com/advimman/lama" data-i18n="footer.lama">LaMa：涂抹消除模型（Apache-2.0）</a></li>
+        <li><a href="https://huggingface.co/briaai/RMBG-1.4" data-i18n="footer.rmbg">BRIA RMBG-1.4：抠图模型，仅限非商业使用</a></li>
+        <li data-i18n="footer.samples">示例图片：NASA（公有领域）、克利夫兰艺术博物馆开放资源（CC0）、Rachel Michetti（CC0）</li>
+        <li><a href="https://github.com/DietCokewithSugar/hotgaze" data-i18n="footer.source">源代码</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,77 @@
+# Render Blueprint for 焦点 Focal — https://render.com/docs/blueprint-spec
+#
+# Two services in one region:
+#   hotgaze  public web service (free): the site, the attention heatmap, and the
+#            cutout/erase API, which forwards to the private service below.
+#   iopaint  private service (paid, 1 CPU / 2 GB): IOPaint with LaMa (erase) and
+#            BRIA RMBG-1.4 (cutout), models baked into the Docker image. It has no
+#            public URL; only services in the same region and workspace reach it.
+#
+# In the Render Dashboard: New → Blueprint → pick this repository and branch →
+# Apply. See web/README.md and services/iopaint/README.md for details.
+services:
+  - type: web
+    # Kept from the first deploy so an existing service updates in place; the
+    # name only shapes the default *.onrender.com address.
+    name: hotgaze
+    runtime: python
+    # 512 MB RAM, 0.1 CPU; sleeps after 15 min without traffic (~1 min to wake).
+    plan: free
+    # Closest region to East Asia. Fixed once the service exists; both services
+    # must share it to talk over the private network.
+    region: singapore
+    buildCommand: bash web/render-build.sh
+    startCommand: uvicorn app:app --app-dir web --host 0.0.0.0 --port $PORT
+    healthCheckPath: /healthz
+    envVars:
+      # Render needs a full x.y.z version here; 3.12 matches the README and CI.
+      - key: PYTHON_VERSION
+        value: 3.12.13
+      # host:port of the IOPaint private service; web/app.py adds http://.
+      # Without it the cutout and erase pages say the tools are unavailable.
+      - key: IOPAINT_URL
+        fromService:
+          type: pserv
+          name: iopaint
+          property: hostport
+      # Inside the project directory, so weights fetched during the build ship
+      # with the deploy instead of being downloaded on the first request.
+      - key: HOTGAZE_CACHE
+        value: /opt/render/project/src/.hotgaze-cache
+      # Largest accepted heatmap screenshot. A 10 MP compare peaks around
+      # 390 MB RSS (with the malloc settings below), which fits the free plan;
+      # raise it on larger instances. Cutout and erase accept up to 25 MP and
+      # downscale to 2048 px before calling IOPaint.
+      - key: HOTGAZE_WEB_MAX_PIXELS
+        value: "10000000"
+      # "true" installs CPU-only PyTorch for the deep (UNISAL) backend. It peaks
+      # at ~0.7–0.8 GB per image, so it also needs plan 1c-2g or larger.
+      - key: HOTGAZE_ENABLE_DEEP
+        value: "false"
+      - key: WEB_CONCURRENCY
+        value: "1"
+      # glibc tuning for 512 MB: a fixed mmap threshold hands large numpy
+      # buffers back to the OS as soon as they are freed (10 MP compare peak
+      # ~390 MB instead of ~460 MB), and fewer arenas limit fragmentation.
+      - key: MALLOC_MMAP_THRESHOLD_
+        value: "131072"
+      - key: MALLOC_ARENA_MAX
+        value: "2"
+      # Hides OpenCV 5 DNN notices that the faces layer logs on every request.
+      - key: OPENCV_LOG_LEVEL
+        value: ERROR
+
+  - type: pserv
+    name: iopaint
+    runtime: docker
+    # 1 CPU, 2 GB RAM. services/iopaint/server.py keeps one model in memory at
+    # a time so the peak (~1.75 GB erasing, ~1.87 GB cutting out) fits; the
+    # stock `iopaint start` loads both models and is killed at 2 GB.
+    plan: 1c-2g
+    region: singapore
+    dockerfilePath: ./services/iopaint/Dockerfile
+    dockerContext: ./services/iopaint
+    envVars:
+      # The port the image listens on; IOPAINT_URL above resolves to iopaint-xxxx:10000.
+      - key: PORT
+        value: "10000"

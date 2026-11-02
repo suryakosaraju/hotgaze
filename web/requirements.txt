@@ -1,0 +1,5 @@
+# Web server for the HotGaze demo (web/app.py).
+# HotGaze itself is installed from the repository root: pip install . -r web/requirements.txt
+fastapi>=0.115,<1
+uvicorn>=0.30,<1
+python-multipart>=0.0.18
