@@ -1,0 +1,577 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-02T16:26:06+00:00",
+  "title": "Design System: 焦点 Focal",
+  "extensions": {
+    "colorMeta": {
+      "focal-blue": {
+        "role": "primary",
+        "displayName": "Focal Blue",
+        "canonical": "#1f4fe0",
+        "tonalRamp": [
+          "#0b1d57",
+          "#11298a",
+          "#1a43c4",
+          "#1f4fe0",
+          "#4f74ea",
+          "#8aa4f2",
+          "#c3d2fa",
+          "#e9effe"
+        ]
+      },
+      "focal-blue-deep": {
+        "role": "primary",
+        "displayName": "Focal Blue Deep",
+        "canonical": "#1a43c4",
+        "tonalRamp": [
+          "#0b1d57",
+          "#11298a",
+          "#1a43c4",
+          "#1f4fe0",
+          "#4f74ea",
+          "#8aa4f2",
+          "#c3d2fa",
+          "#e9effe"
+        ]
+      },
+      "focal-blue-wash": {
+        "role": "primary",
+        "displayName": "Focal Blue Wash",
+        "canonical": "#e9effe",
+        "tonalRamp": [
+          "#0b1d57",
+          "#11298a",
+          "#1a43c4",
+          "#1f4fe0",
+          "#4f74ea",
+          "#8aa4f2",
+          "#c3d2fa",
+          "#e9effe"
+        ]
+      },
+      "focal-blue-ink": {
+        "role": "primary",
+        "displayName": "Focal Blue Ink",
+        "canonical": "#1c3a99",
+        "tonalRamp": [
+          "#0b1d57",
+          "#1c3a99",
+          "#1a43c4",
+          "#1f4fe0",
+          "#4f74ea",
+          "#8aa4f2",
+          "#c3d2fa",
+          "#e9effe"
+        ]
+      },
+      "focus-ring": {
+        "role": "primary",
+        "displayName": "Focus Ring",
+        "canonical": "rgba(31, 79, 224, 0.38)",
+        "tonalRamp": []
+      },
+      "page-white": {
+        "role": "neutral",
+        "displayName": "Page White",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#10131a",
+          "#2a2f3a",
+          "#454c5a",
+          "#626a79",
+          "#c9cfdb",
+          "#e2e6ee",
+          "#f5f7fb",
+          "#ffffff"
+        ]
+      },
+      "cool-surface": {
+        "role": "neutral",
+        "displayName": "Cool Surface",
+        "canonical": "#f5f7fb",
+        "tonalRamp": [
+          "#10131a",
+          "#2a2f3a",
+          "#454c5a",
+          "#626a79",
+          "#c9cfdb",
+          "#e2e6ee",
+          "#eceff6",
+          "#f5f7fb"
+        ]
+      },
+      "cool-surface-deep": {
+        "role": "neutral",
+        "displayName": "Cool Surface Deep",
+        "canonical": "#eceff6",
+        "tonalRamp": [
+          "#10131a",
+          "#2a2f3a",
+          "#454c5a",
+          "#626a79",
+          "#c9cfdb",
+          "#e2e6ee",
+          "#eceff6",
+          "#f5f7fb"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#e2e6ee",
+        "tonalRamp": [
+          "#10131a",
+          "#2a2f3a",
+          "#454c5a",
+          "#626a79",
+          "#c9cfdb",
+          "#e2e6ee",
+          "#eceff6",
+          "#f5f7fb"
+        ]
+      },
+      "hairline-strong": {
+        "role": "neutral",
+        "displayName": "Hairline Strong",
+        "canonical": "#c9cfdb",
+        "tonalRamp": [
+          "#10131a",
+          "#2a2f3a",
+          "#454c5a",
+          "#626a79",
+          "#c9cfdb",
+          "#e2e6ee",
+          "#eceff6",
+          "#f5f7fb"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#10131a",
+        "tonalRamp": [
+          "#10131a",
+          "#2a2f3a",
+          "#454c5a",
+          "#626a79",
+          "#c9cfdb",
+          "#e2e6ee",
+          "#eceff6",
+          "#f5f7fb"
+        ]
+      },
+      "ink-secondary": {
+        "role": "neutral",
+        "displayName": "Ink Secondary",
+        "canonical": "#454c5a",
+        "tonalRamp": [
+          "#10131a",
+          "#2a2f3a",
+          "#454c5a",
+          "#626a79",
+          "#c9cfdb",
+          "#e2e6ee",
+          "#eceff6",
+          "#f5f7fb"
+        ]
+      },
+      "ink-tertiary": {
+        "role": "neutral",
+        "displayName": "Ink Tertiary",
+        "canonical": "#626a79",
+        "tonalRamp": [
+          "#10131a",
+          "#2a2f3a",
+          "#454c5a",
+          "#626a79",
+          "#c9cfdb",
+          "#e2e6ee",
+          "#eceff6",
+          "#f5f7fb"
+        ]
+      },
+      "checker-grey": {
+        "role": "neutral",
+        "displayName": "Checker Grey",
+        "canonical": "#e7eaf1",
+        "tonalRamp": []
+      },
+      "overlay-ink": {
+        "role": "neutral",
+        "displayName": "Overlay Ink",
+        "canonical": "rgba(16, 19, 26, 0.72)",
+        "tonalRamp": []
+      },
+      "success": {
+        "role": "status",
+        "displayName": "Success Green",
+        "canonical": "#157f3c",
+        "tonalRamp": [
+          "#06301a",
+          "#0d5427",
+          "#157f3c",
+          "#2a9a52",
+          "#5bb87c",
+          "#9dd6b0",
+          "#cdebd7",
+          "#e8f5ec"
+        ]
+      },
+      "success-wash": {
+        "role": "status",
+        "displayName": "Success Wash",
+        "canonical": "#e8f5ec",
+        "tonalRamp": []
+      },
+      "danger": {
+        "role": "status",
+        "displayName": "Danger Red",
+        "canonical": "#c42b2b",
+        "tonalRamp": [
+          "#3f0b0b",
+          "#7d1717",
+          "#a32222",
+          "#c42b2b",
+          "#da5a5a",
+          "#ec9999",
+          "#f7cccc",
+          "#fdecec"
+        ]
+      },
+      "danger-wash": {
+        "role": "status",
+        "displayName": "Danger Wash",
+        "canonical": "#fdecec",
+        "tonalRamp": []
+      },
+      "danger-ink": {
+        "role": "status",
+        "displayName": "Danger Ink",
+        "canonical": "#7d1717",
+        "tonalRamp": []
+      },
+      "warning": {
+        "role": "status",
+        "displayName": "Warning Amber",
+        "canonical": "#a35a00",
+        "tonalRamp": [
+          "#331c00",
+          "#6b3b00",
+          "#8a4c00",
+          "#a35a00",
+          "#c97f24",
+          "#e2ae6a",
+          "#f3d6ac",
+          "#fdf3e3"
+        ]
+      },
+      "warning-wash": {
+        "role": "status",
+        "displayName": "Warning Wash",
+        "canonical": "#fdf3e3",
+        "tonalRamp": []
+      },
+      "warning-ink": {
+        "role": "status",
+        "displayName": "Warning Ink",
+        "canonical": "#6b3b00",
+        "tonalRamp": []
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Home hero headline only. 42px when lang=en (no forced break), 34px under 768px."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Home feature row headings; 26px on mobile."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Tool page heading; 26px on mobile."
+      },
+      "title-sm": {
+        "displayName": "Title Small",
+        "purpose": "Results block heading."
+      },
+      "lead": {
+        "displayName": "Lead",
+        "purpose": "Home lead sentence, Ink Secondary, max 34em; 16.5px mobile."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Default text. Latin renders in Figtree (unicode-range subset), Chinese in the system CJK sans."
+      },
+      "button": {
+        "displayName": "Button",
+        "purpose": "All buttons; 17px large, 14px small."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Field labels, segmented options, language toggle, disclosure summaries."
+      },
+      "meta": {
+        "displayName": "Meta",
+        "purpose": "Dimensions, captions, fineprint (13px), status hints (13px)."
+      },
+      "numeric": {
+        "displayName": "Numeric",
+        "purpose": "Tables and any reading: tabular numerals always."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "JSON region input and raw JSON output only."
+      }
+    },
+    "shadows": [
+      {
+        "name": "stage-lift",
+        "value": "0 22px 44px -22px rgba(16, 19, 26, 0.32), 0 2px 6px rgba(16, 19, 26, 0.06)",
+        "purpose": "The one soft shadow: the home before/after comparison stage. CSS var --shadow-stage."
+      },
+      {
+        "name": "pop",
+        "value": "0 10px 24px -8px rgba(16, 19, 26, 0.24), 0 1px 3px rgba(16, 19, 26, 0.08)",
+        "purpose": "Small controls floating over content: compare knob, toast. CSS var --shadow-pop."
+      },
+      {
+        "name": "selected-thumb",
+        "value": "0 1px 2px rgba(16, 19, 26, 0.14)",
+        "purpose": "Selected option in a segmented control."
+      },
+      {
+        "name": "focus-halo",
+        "value": "0 0 0 3px rgba(31, 79, 224, 0.38)",
+        "purpose": "Focus on selects, textareas and inputs (paired with a blue border). Other elements use a 3px outline at 2px offset."
+      },
+      {
+        "name": "swatch-selected",
+        "value": "0 0 0 2px #ffffff, 0 0 0 4px #1f4fe0",
+        "purpose": "Selected background swatch ring."
+      },
+      {
+        "name": "image-hairline",
+        "value": "inset 0 0 0 1px rgba(16, 19, 26, 0.1)",
+        "purpose": "Edge over feature images and heatmap shots; a border, not elevation."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Movement: button press nudge, disclosure chevron, compare sweep. CSS var --ease-out."
+      },
+      {
+        "name": "state-change",
+        "value": "150ms",
+        "purpose": "Colour, border and shadow transitions on every control."
+      },
+      {
+        "name": "compare-sweep",
+        "value": "--pos 900ms ease-out",
+        "purpose": "Home compare divider glides when the showcase tab changes (registered @property --pos)."
+      },
+      {
+        "name": "spin",
+        "value": "800ms linear infinite",
+        "purpose": "Status spinner and busy-button ring."
+      },
+      {
+        "name": "sheen",
+        "value": "1.6s linear infinite",
+        "purpose": "White sheen sweeping across a working stage."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "0.01ms",
+        "purpose": "prefers-reduced-motion collapses all animation and transition durations."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "mobile",
+        "value": "767px",
+        "purpose": "max-width: gutter 16px, header 56px, nav on its own scrolling row without icons, single-column features, stage padding 12px."
+      },
+      {
+        "name": "tablet",
+        "value": "1023px",
+        "purpose": "max-width: hero stacks, tool panel moves below the stage and stops being sticky, on-stage working pill appears."
+      },
+      {
+        "name": "page",
+        "value": "1200px",
+        "purpose": "Max page column (--page)."
+      },
+      {
+        "name": "hover-none",
+        "value": "(hover: none)",
+        "purpose": "Keyboard shortcut hints hidden on touch screens."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The next step. One solid blue per panel or block; large (52px) in panels and drop prompts.",
+      "html": "<button class=\"ds-btn ds-btn-primary ds-btn-lg\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 4.5v11\"/><path d=\"M7.5 11 12 15.5 16.5 11\"/><path d=\"M5 19.5h14\"/></svg><span>下载 PNG</span></button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px; border: 1px solid #c9cfdb; border-radius: 10px; background: #fff; color: #10131a; font-family: \"Figtree\", \"PingFang SC\", \"HarmonyOS Sans SC\", \"MiSans\", \"Microsoft YaHei UI\", \"Microsoft YaHei\", \"Noto Sans SC\", \"Source Han Sans SC\", system-ui, sans-serif; font-weight: 600; font-size: 15px; line-height: 1.2; cursor: pointer; transition: background-color 0.15s, border-color 0.15s, color 0.15s, transform 0.15s cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn:hover { background: #f5f7fb; } .ds-btn:active { transform: translateY(1px); } .ds-btn:focus-visible { outline: 3px solid rgba(31, 79, 224, 0.38); outline-offset: 2px; } .ds-btn-primary { border-color: #1f4fe0; background: #1f4fe0; color: #fff; } .ds-btn-primary:hover { border-color: #1a43c4; background: #1a43c4; color: #fff; } .ds-btn-lg { min-height: 52px; padding: 0 26px; border-radius: 12px; font-size: 17px; }"
+    },
+    {
+      "name": "Disabled Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary-disabled",
+      "description": "Unavailable, not faded: grey fill, tertiary text, full opacity.",
+      "html": "<button class=\"ds-btn ds-btn-primary ds-btn-lg\" disabled><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 4.5v11\"/><path d=\"M7.5 11 12 15.5 16.5 11\"/><path d=\"M5 19.5h14\"/></svg><span>下载 PNG</span></button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px; border: 1px solid #c9cfdb; border-radius: 10px; background: #fff; color: #10131a; font-family: \"Figtree\", \"PingFang SC\", \"HarmonyOS Sans SC\", \"MiSans\", \"Microsoft YaHei UI\", \"Microsoft YaHei\", \"Noto Sans SC\", \"Source Han Sans SC\", system-ui, sans-serif; font-weight: 600; font-size: 15px; line-height: 1.2; cursor: pointer; transition: background-color 0.15s, border-color 0.15s, color 0.15s, transform 0.15s cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn:hover { background: #f5f7fb; } .ds-btn:active { transform: translateY(1px); } .ds-btn:focus-visible { outline: 3px solid rgba(31, 79, 224, 0.38); outline-offset: 2px; } .ds-btn-primary { border-color: #1f4fe0; background: #1f4fe0; color: #fff; } .ds-btn-lg { min-height: 52px; padding: 0 26px; border-radius: 12px; font-size: 17px; } .ds-btn-primary:disabled, .ds-btn-primary:disabled:hover { border-color: #e2e6ee; background: #eceff6; color: #626a79; cursor: not-allowed; transform: none; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "White, strong hairline; all non-primary actions.",
+      "html": "<button class=\"ds-btn\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 15.5V4.5\"/><path d=\"M7.5 9 12 4.5 16.5 9\"/><path d=\"M4.5 15v3a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-3\"/></svg><span>换一张图片</span></button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px; border: 1px solid #c9cfdb; border-radius: 10px; background: #fff; color: #10131a; font-family: \"Figtree\", \"PingFang SC\", \"HarmonyOS Sans SC\", \"MiSans\", \"Microsoft YaHei UI\", \"Microsoft YaHei\", \"Noto Sans SC\", \"Source Han Sans SC\", system-ui, sans-serif; font-weight: 600; font-size: 15px; line-height: 1.2; cursor: pointer; transition: background-color 0.15s, border-color 0.15s, color 0.15s, transform 0.15s cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn:hover { background: #f5f7fb; } .ds-btn:active { transform: translateY(1px); } .ds-btn:focus-visible { outline: 3px solid rgba(31, 79, 224, 0.38); outline-offset: 2px; }"
+    },
+    {
+      "name": "Quiet Button",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "Transparent side action: revert, choose another image.",
+      "html": "<button class=\"ds-btn ds-btn-quiet\">撤销上一次消除</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px; border: 1px solid #c9cfdb; border-radius: 10px; background: #fff; color: #10131a; font-family: \"Figtree\", \"PingFang SC\", \"HarmonyOS Sans SC\", \"MiSans\", \"Microsoft YaHei UI\", \"Microsoft YaHei\", \"Noto Sans SC\", \"Source Han Sans SC\", system-ui, sans-serif; font-weight: 600; font-size: 15px; line-height: 1.2; cursor: pointer; transition: background-color 0.15s, border-color 0.15s, color 0.15s, transform 0.15s cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn:hover { background: #f5f7fb; } .ds-btn:active { transform: translateY(1px); } .ds-btn:focus-visible { outline: 3px solid rgba(31, 79, 224, 0.38); outline-offset: 2px; } .ds-btn-quiet { border-color: transparent; background: transparent; color: #454c5a; } .ds-btn-quiet:hover { background: #eceff6; color: #10131a; }"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "chip",
+      "refersTo": "segmented",
+      "description": "Pill track with a white selected thumb; showcase tabs and heatmap mode.",
+      "html": "<div class=\"ds-seg\" role=\"tablist\"><button role=\"tab\" aria-selected=\"true\">抠图</button><button role=\"tab\" aria-selected=\"false\">消除</button><button role=\"tab\" aria-selected=\"false\">热力图</button></div>",
+      "css": ".ds-seg { display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; background: #eceff6; } .ds-seg button { min-height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: transparent; color: #454c5a; font-family: \"Figtree\", \"PingFang SC\", \"HarmonyOS Sans SC\", \"MiSans\", \"Microsoft YaHei UI\", \"Microsoft YaHei\", \"Noto Sans SC\", \"Source Han Sans SC\", system-ui, sans-serif; font-weight: 600; font-size: 14px; cursor: pointer; transition: background-color 0.15s, color 0.15s, box-shadow 0.15s; } .ds-seg button:hover { color: #10131a; } .ds-seg button[aria-selected=\"true\"] { background: #fff; color: #10131a; box-shadow: 0 1px 2px rgba(16, 19, 26, 0.14); } .ds-seg button:focus-visible { outline: 3px solid rgba(31, 79, 224, 0.38); outline-offset: 2px; }"
+    },
+    {
+      "name": "Sample Chip",
+      "kind": "chip",
+      "refersTo": "sample-chip",
+      "description": "White pill with a round thumbnail of a real sample image.",
+      "html": "<button class=\"ds-chip\"><span class=\"ds-chip-thumb\"></span><span>人像抠图</span></button>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 3px 12px 3px 3px; border: 1px solid #e2e6ee; border-radius: 999px; background: #fff; color: #10131a; font-family: \"Figtree\", \"PingFang SC\", \"HarmonyOS Sans SC\", \"MiSans\", \"Microsoft YaHei UI\", \"Microsoft YaHei\", \"Noto Sans SC\", \"Source Han Sans SC\", system-ui, sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: border-color 0.15s, background-color 0.15s; } .ds-chip:hover { border-color: #c9cfdb; background: #f5f7fb; } .ds-chip:focus-visible { outline: 3px solid rgba(31, 79, 224, 0.38); outline-offset: 2px; } .ds-chip-thumb { width: 28px; height: 28px; border-radius: 50%; background: #e7eaf1; }"
+    },
+    {
+      "name": "Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "White control with strong hairline; focus becomes a blue border plus 3px ring.",
+      "html": "<label class=\"ds-field\"><span>模式</span><select class=\"ds-input\"><option>单张分析</option><option>A/B 对比</option></select></label>",
+      "css": ".ds-field { display: grid; gap: 6px; font-family: \"Figtree\", \"PingFang SC\", \"HarmonyOS Sans SC\", \"MiSans\", \"Microsoft YaHei UI\", \"Microsoft YaHei\", \"Noto Sans SC\", \"Source Han Sans SC\", system-ui, sans-serif; } .ds-field > span { font-size: 14px; font-weight: 600; color: #10131a; } .ds-input { width: 100%; min-height: 42px; padding: 9px 12px; border: 1px solid #c9cfdb; border-radius: 10px; background: #fff; color: #10131a; font: inherit; font-size: 15px; transition: border-color 0.15s, box-shadow 0.15s; } .ds-input:hover { border-color: #626a79; } .ds-input:focus-visible { outline: none; border-color: #1f4fe0; box-shadow: 0 0 0 3px rgba(31, 79, 224, 0.38); }"
+    },
+    {
+      "name": "Navigation",
+      "kind": "nav",
+      "refersTo": "nav",
+      "description": "Sticky white header; current tool gets ink text and a 2px blue underline on the hairline.",
+      "html": "<header class=\"ds-nav\"><a class=\"ds-brand\" href=\"#\"><svg width=\"30\" height=\"30\" viewBox=\"0 0 32 32\" aria-hidden=\"true\"><rect width=\"32\" height=\"32\" rx=\"9\" fill=\"#1f4fe0\"/><path d=\"M9 13.5v-3A1.5 1.5 0 0 1 10.5 9h3M18.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3M23 18.5v3a1.5 1.5 0 0 1-1.5 1.5h-3M13.5 23h-3A1.5 1.5 0 0 1 9 21.5v-3\" fill=\"none\" stroke=\"#fff\" stroke-width=\"2.2\" stroke-linecap=\"round\"/><circle cx=\"16\" cy=\"16\" r=\"3\" fill=\"#fff\"/></svg><b>焦点</b><span>Focal</span></a><nav><a href=\"#\" aria-current=\"page\">智能抠图</a><a href=\"#\">涂抹消除</a><a href=\"#\">注意力热力图</a></nav><button class=\"ds-lang\">EN</button></header>",
+      "css": ".ds-nav { display: flex; align-items: center; gap: 24px; height: 64px; padding: 0 24px; background: #fff; border-bottom: 1px solid #e2e6ee; font-family: \"Figtree\", \"PingFang SC\", \"HarmonyOS Sans SC\", \"MiSans\", \"Microsoft YaHei UI\", \"Microsoft YaHei\", \"Noto Sans SC\", \"Source Han Sans SC\", system-ui, sans-serif; } .ds-brand { display: inline-flex; align-items: center; gap: 10px; margin-right: auto; color: #10131a; text-decoration: none; } .ds-brand b { font-size: 20px; font-weight: 700; letter-spacing: 0.02em; } .ds-brand span { font-size: 17px; font-weight: 600; color: #626a79; } .ds-nav nav { display: flex; gap: 4px; height: 100%; } .ds-nav nav a { display: inline-flex; align-items: center; padding: 0 12px; color: #454c5a; font-weight: 500; text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.15s, border-color 0.15s; } .ds-nav nav a:hover { color: #10131a; } .ds-nav nav a[aria-current=\"page\"] { color: #10131a; border-bottom-color: #1f4fe0; } .ds-nav a:focus-visible, .ds-lang:focus-visible { outline: 3px solid rgba(31, 79, 224, 0.38); outline-offset: 2px; } .ds-lang { min-height: 36px; padding: 0 12px; border: 1px solid #c9cfdb; border-radius: 999px; background: #fff; color: #454c5a; font: inherit; font-weight: 600; font-size: 14px; cursor: pointer; } .ds-lang:hover { background: #f5f7fb; color: #10131a; }"
+    },
+    {
+      "name": "Empty Stage (drop target)",
+      "kind": "custom",
+      "refersTo": "stage",
+      "description": "The stage is the drop target: dashed edge on Cool Surface, blue wash on drag-over.",
+      "html": "<div class=\"ds-stage\"><svg width=\"40\" height=\"40\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#1f4fe0\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"4.5\" width=\"17\" height=\"15\" rx=\"2.5\"/><circle cx=\"9\" cy=\"10\" r=\"1.8\"/><path d=\"m20.5 15.5-4.8-4.8L6.5 19.5\"/></svg><button class=\"ds-up\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 15.5V4.5\"/><path d=\"M7.5 9 12 4.5 16.5 9\"/><path d=\"M4.5 15v3a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-3\"/></svg><span>上传图片</span></button><p class=\"ds-hint\">或把图片拖到这里，也可以直接粘贴（Ctrl+V）</p><p class=\"ds-fmt\">支持 PNG、JPG、WebP，最大 20 MB</p></div>",
+      "css": ".ds-stage { display: grid; place-items: center; align-content: center; gap: 12px; min-height: 320px; padding: 24px; border: 2px dashed #c9cfdb; border-radius: 16px; background: #f5f7fb; text-align: center; font-family: \"Figtree\", \"PingFang SC\", \"HarmonyOS Sans SC\", \"MiSans\", \"Microsoft YaHei UI\", \"Microsoft YaHei\", \"Noto Sans SC\", \"Source Han Sans SC\", system-ui, sans-serif; transition: border-color 0.15s, background-color 0.15s; } .ds-stage:hover { border-color: #1f4fe0; background: #e9effe; } .ds-up { display: inline-flex; align-items: center; gap: 8px; min-height: 52px; padding: 0 26px; border: 1px solid #1f4fe0; border-radius: 12px; background: #1f4fe0; color: #fff; font: inherit; font-weight: 600; font-size: 17px; cursor: pointer; } .ds-up:hover { background: #1a43c4; } .ds-up:focus-visible { outline: 3px solid rgba(31, 79, 224, 0.38); outline-offset: 2px; } .ds-hint { margin: 0; font-size: 14.5px; color: #454c5a; } .ds-fmt { margin: 0; font-size: 13px; color: #626a79; }"
+    },
+    {
+      "name": "Error Banner with Retry",
+      "kind": "custom",
+      "refersTo": "alert-error",
+      "description": "Above the stage; plain message in the chosen language and a small retry button.",
+      "html": "<div class=\"ds-alert\" role=\"alert\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#c42b2b\" stroke-width=\"1.8\" stroke-linecap=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M12 7.5v5.5\"/><path d=\"M12 16.4v.1\"/></svg><div class=\"ds-alert-body\"><p>连不上服务器。如果刚打开网站，服务器可能正在唤醒，请等一分钟再试。</p><div><button class=\"ds-retry\">重试</button></div></div></div>",
+      "css": ".ds-alert { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 12px; background: #fdecec; color: #7d1717; font-family: \"Figtree\", \"PingFang SC\", \"HarmonyOS Sans SC\", \"MiSans\", \"Microsoft YaHei UI\", \"Microsoft YaHei\", \"Noto Sans SC\", \"Source Han Sans SC\", system-ui, sans-serif; font-size: 14.5px; line-height: 1.55; } .ds-alert svg { flex: none; margin-top: 1px; } .ds-alert-body { display: grid; gap: 8px; flex: 1; } .ds-alert p { margin: 0; } .ds-retry { min-height: 36px; padding: 0 12px; border: 1px solid #c9cfdb; border-radius: 10px; background: #fff; color: #10131a; font: inherit; font-weight: 600; font-size: 14px; cursor: pointer; } .ds-retry:hover { background: #f5f7fb; } .ds-retry:focus-visible { outline: 3px solid rgba(31, 79, 224, 0.38); outline-offset: 2px; }"
+    },
+    {
+      "name": "Working Status",
+      "kind": "custom",
+      "refersTo": "status",
+      "description": "Spinner, state sentence, elapsed seconds in tabular numerals, typical-duration hint.",
+      "html": "<div class=\"ds-status\"><span class=\"ds-spin\"></span><span>正在抠图… <span class=\"ds-elapsed\">7 秒</span><small>通常需要 10–15 秒</small></span></div>",
+      "css": ".ds-status { display: flex; align-items: flex-start; gap: 10px; font-family: \"Figtree\", \"PingFang SC\", \"HarmonyOS Sans SC\", \"MiSans\", \"Microsoft YaHei UI\", \"Microsoft YaHei\", \"Noto Sans SC\", \"Source Han Sans SC\", system-ui, sans-serif; font-size: 14.5px; line-height: 1.55; color: #454c5a; } .ds-spin { flex: none; width: 18px; height: 18px; margin-top: 2px; border-radius: 50%; border: 2px solid #c9cfdb; border-top-color: #1f4fe0; animation: ds-spin 0.8s linear infinite; } .ds-elapsed { color: #626a79; font-variant-numeric: tabular-nums; } .ds-status small { display: block; font-size: 13px; color: #626a79; } @keyframes ds-spin { to { transform: rotate(360deg); } } @media (prefers-reduced-motion: reduce) { .ds-spin { animation: none; } }"
+    },
+    {
+      "name": "Compare Tag over Checkerboard",
+      "kind": "custom",
+      "refersTo": "image-tag",
+      "description": "Overlay-ink pill tag on a transparency checkerboard: the two image-surface devices.",
+      "html": "<div class=\"ds-checker\"><span class=\"ds-tag\">处理后</span></div>",
+      "css": ".ds-checker { position: relative; height: 160px; border-radius: 12px; background-color: #fff; background-image: conic-gradient(#e7eaf1 25%, transparent 0 50%, #e7eaf1 0 75%, transparent 0); background-size: 20px 20px; } .ds-tag { position: absolute; top: 12px; right: 12px; padding: 3px 10px; border-radius: 999px; background: rgba(16, 19, 26, 0.72); color: #fff; font-family: \"Figtree\", \"PingFang SC\", \"HarmonyOS Sans SC\", \"MiSans\", \"Microsoft YaHei UI\", \"Microsoft YaHei\", \"Noto Sans SC\", \"Source Han Sans SC\", system-ui, sans-serif; font-size: 12.5px; font-weight: 600; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Honest Workbench",
+    "overview": "**Creative North Star: \"The Honest Workbench\"**\n\nFocal is the familiar online image tool, played straight and finished well: a white page, cool grey working surfaces, near-black ink and one confident blue. Nothing pretends to be magic. The only pictures are real photographs and real outputs of the site's own tools, and the checkerboard is the one pattern in the system because it means something: transparency. The craft bar is remove.bg and Canva (可画), and the system meets it through restraint. Hairline borders, generous rounded containers, and a single soft lift on the comparison stage.\n\nTwo modes share one world. Home persuades: a two-column hero with a working dropzone on the left and a live before/after stage on the right, then a band of plain promises and alternating feature rows of real output pairs. The three tools (/cutout, /erase, /heatmap) operate: the same tokens arranged into one fixed grammar of stage, panel and results. Density stays comfortable rather than compact. Chinese leads, English is equal, and every layout holds both.\n\nThe system rejects \"AI magic\" gradients, hype styling, dark-mode theatrics, and walls of icon tiles with no real output behind them.",
+    "keyCharacteristics": [
+      "White ground, cool grey surfaces, near-black ink; one blue, used for action, focus, selection and the brand mark.",
+      "Checkerboard means transparency, and is used for nothing else.",
+      "Rounded containers (12–16px), 10px controls, pills for chips, tags and toggles.",
+      "Hairline borders carry structure; one soft shadow lifts the comparison stage.",
+      "Figtree for Latin, system CJK sans for Chinese, tabular numerals for every reading.",
+      "Every state is visible: empty, working with elapsed seconds, done, error with retry."
+    ],
+    "rules": [
+      {
+        "name": "The One Blue Rule",
+        "body": "Focal Blue is the only chromatic accent in the interface. A solid blue fill means \"the next step\"; at most one solid blue button is visible in a panel at a time. Every other blue is a line, a ring, a wash, or a data mark.",
+        "section": "colors"
+      },
+      {
+        "name": "The Checkerboard Means Transparency Rule",
+        "body": "The checker pattern (checker-grey on white, 20px tiles) appears only behind transparent pixels or as the \"transparent\" background swatch. It is never decoration.",
+        "section": "colors"
+      },
+      {
+        "name": "The Real Pixels Rule",
+        "body": "Imagery is real photographs or real outputs of the three tools, each with recorded provenance. No illustration, stock mood imagery, or generated art.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Readings Rule",
+        "body": "Every number a user reads as a measurement (elapsed seconds, pixel dimensions, brush size, attention share, A/B deltas, grid cells) is set with tabular numerals.",
+        "section": "typography"
+      },
+      {
+        "name": "The Bilingual Fit Rule",
+        "body": "Every heading and control is sized for both languages. Where English runs longer, it gets its own size or wrapping (hero display steps down to 42px, `<br>` is hidden); it never gets truncated.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Lift Rule",
+        "body": "One soft shadow per page, on the comparison stage. Panels, cards, toolbars and tool stages stay flat and bordered.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep exactly one solid Focal Blue button per panel or block: the next step.",
+      "Do grey out a disabled primary (Cool Surface Deep, Ink Tertiary text) instead of fading the blue.",
+      "Do make the stage the drop target and keep it a drop target after an image is loaded.",
+      "Do put errors in a banner above the stage, in plain words, with a retry button.",
+      "Do show elapsed seconds while working, in tabular numerals, and say plainly when the server is slow.",
+      "Do use the checkerboard behind every transparent result and as the transparent swatch.",
+      "Do use inline line-icon SVGs at a 1.8px stroke, coloured by `currentColor`.",
+      "Do set every string for both languages and check both widths.",
+      "Do honour `prefers-reduced-motion`; all transitions are 150ms colour changes or ease-out (`cubic-bezier(0.16, 1, 0.3, 1)`) movements."
+    ],
+    "donts": [
+      "Don't add a second accent hue; status colours are for status and data only.",
+      "Don't use decorative gradients, glows or \"AI magic\" colour washes. Gradients appear only where they carry meaning: the checkerboard, the working sheen, the colour-picker swatch.",
+      "Don't put shadows on panels, cards, toolbars or tool stages; the comparison stage is the one lift.",
+      "Don't use illustrations, stock photography or generated imagery; show real outputs with provenance.",
+      "Don't use emoji or Unicode glyphs as icons.",
+      "Don't add eyebrow labels or kickers above headings.",
+      "Don't introduce a dark theme; the page is light (`color-scheme: light`). Dark appears only as translucent ink pills over imagery and the toast.",
+      "Don't invent social proof, usage numbers or testimonials."
+    ]
+  }
+}

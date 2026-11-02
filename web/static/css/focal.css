@@ -34,7 +34,6 @@
   --accent-hover: #1a43c4;
   --accent-soft: #e9effe;
   --accent-ring: rgba(31, 79, 224, 0.38);
-  --paint: rgba(31, 79, 224, 0.55);
 
   --success: #157f3c;
   --success-soft: #e8f5ec;
@@ -1582,7 +1581,7 @@ kbd {
   position: absolute;
   border: 2px solid #fff;
   border-radius: 2px;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 0 1px rgba(16, 19, 26, 0.6), inset 0 0 0 1px rgba(16, 19, 26, 0.3);
 }
 
 .mark-box.is-pending,
@@ -1631,7 +1630,7 @@ kbd {
   color: var(--ink);
   font-size: 11.5px;
   font-weight: 700;
-  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 0 0 2px rgba(16, 19, 26, 0.7);
 }
 
 .region-list {
